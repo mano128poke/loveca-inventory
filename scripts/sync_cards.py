@@ -10,20 +10,23 @@ BASE = "https://llofficial-cardgame.com/cardlist/searchresults/"
 OUTPUT = "data/cards.json"
 
 session = requests.Session()
+
 session.headers.update({
     "User-Agent": (
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-        "AppleWebKit/537.36 Chrome/140.0 Safari/537.36"
+        "AppleWebKit/537.36 (KHTML, like Gecko) "
+        "Chrome/140.0 Safari/537.36"
     ),
-    "Accept-Language": "ja-JP,ja;q=0.9,en;q=0.8",
+    "Accept": "text/html,application/xhtml+xml",
+    "Accept-Language": "ja-JP,ja;q=0.9"
 })
 
 
 def get_page(page):
+
     params = {
-        "expansion": "",
         "view": "text",
-        "sort": "new",
+        "sort": "new"
     }
 
     if page > 1:
@@ -37,280 +40,162 @@ def get_page(page):
 
     response.raise_for_status()
 
-    return response.url, BeautifulSoup(
+    soup = BeautifulSoup(
         response.text,
         "html.parser"
     )
 
-
-def clean_text(text):
-    text = re.sub(r"\s+", " ", text)
-    return text.strip()
-
-
-def get_image(element):
-    img = element.find("img")
-
-    if not img:
-        return ""
-
-    src = (
-        img.get("src")
-        or img.get("data-src")
-        or img.get("data-lazy-src")
-        or ""
-    )
-
-    if not src:
-        return ""
-
-    return urljoin(BASE, src)
+    return soup
 
 
 def parse_cards(soup):
+
     cards = {}
 
-    # 公式サイトの検索結果本文を取得
-    main = (
-        soup.find("main")
-        or soup.find("body")
+    # ページ全体を改行区切りのテキストにする
+    text = soup.get_text(
+        "\n",
+        strip=True
     )
 
-    if not main:
-        return cards
+    # 空行を除去
+    lines = [
+        line.strip()
+        for line in text.splitlines()
+        if line.strip()
+    ]
 
-    # 「カード番号」を含む要素を探す
-    number_elements = main.find_all(
-        string=re.compile(r"カード番号")
-    )
+    # 公式サイトでは基本的に
+    #
+    # カード名
+    # 収録商品
+    # 商品名
+    # カードタイプ
+    # カードタイプ名
+    # カード番号
+    # カード番号
+    #
+    # の順番になっている
+    #
+    # これを直接解析する
 
-    for number_text in number_elements:
+    for i in range(len(lines) - 5):
 
-        parent = number_text.parent
-
-        # カード番号を抽出
-        full_text = clean_text(
-            parent.get_text(" ", strip=True)
-        )
-
-        match = re.search(
-            r"カード番号\s*([A-Za-z0-9!＋+\-_.]+)",
-            full_text
-        )
-
-        if not match:
-            # 親を1段階上げて再検索
-            parent = parent.parent
-
-            if not parent:
-                continue
-
-            full_text = clean_text(
-                parent.get_text(" ", strip=True)
-            )
-
-            match = re.search(
-                r"カード番号\s*([A-Za-z0-9!＋+\-_.]+)",
-                full_text
-            )
-
-        if not match:
+        if lines[i + 1] != "収録商品":
             continue
 
-        card_id = match.group(1).strip()
-
-        # すでに取得済みならスキップ
-        if card_id in cards:
+        if lines[i + 3] != "カードタイプ":
             continue
 
-        # カード番号まで含む適度な範囲を取得
-        block = parent
-
-        for _ in range(5):
-
-            if not block:
-                break
-
-            text = clean_text(
-                block.get_text(" ", strip=True)
-            )
-
-            if (
-                "収録商品" in text
-                and "カードタイプ" in text
-                and "カード番号" in text
-            ):
-                break
-
-            block = block.parent
-
-        if not block:
+        if lines[i + 5] != "カード番号":
             continue
 
-        text = clean_text(
-            block.get_text(" ", strip=True)
-        )
+        name = lines[i]
+        product = lines[i + 2]
+        kind = lines[i + 4]
 
-        # -------------------------
-        # 各項目を抽出
-        # -------------------------
+        if i + 6 >= len(lines):
+            continue
 
-        def between(start, ends):
-            pattern = (
-                re.escape(start)
-                + r"\s*(.*?)\s*(?="
-                + "|".join(re.escape(x) for x in ends)
-                + r"|$)"
-            )
+        card_id = lines[i + 6]
 
-            m = re.search(pattern, text)
+        # カード番号らしいものだけ採用
+        if not re.match(
+            r"^[A-Za-z0-9!＋+\-_.]+$",
+            card_id
+        ):
+            continue
 
-            if m:
-                return clean_text(m.group(1))
-
-            return ""
-
-        product = between(
-            "収録商品",
-            [
-                "カードタイプ",
-                "作品名",
-                "参加ユニット",
-                "コスト",
-                "スコア",
-                "基本ハート",
-                "レアリティ",
-                "カード番号",
-            ]
-        )
-
-        kind = between(
-            "カードタイプ",
-            [
-                "作品名",
-                "参加ユニット",
-                "コスト",
-                "スコア",
-                "基本ハート",
-                "レアリティ",
-                "カード番号",
-            ]
-        )
-
-        school = between(
-            "作品名",
-            [
-                "参加ユニット",
-                "コスト",
-                "スコア",
-                "基本ハート",
-                "レアリティ",
-                "カード番号",
-            ]
-        )
-
-        unit = between(
-            "参加ユニット",
-            [
-                "コスト",
-                "スコア",
-                "基本ハート",
-                "レアリティ",
-                "カード番号",
-            ]
-        )
-
-        rarity = between(
-            "レアリティ",
-            [
-                "カード番号",
-            ]
-        )
-
-        # -------------------------
-        # カード名
-        # -------------------------
-
-        name = ""
-
-        # カード番号より前にある見出しを優先
-        candidates = block.find_all(
-            ["h2", "h3", "h4", "h5"]
-        )
-
-        for candidate in candidates:
-
-            value = clean_text(
-                candidate.get_text(" ", strip=True)
-            )
-
-            if not value:
-                continue
-
-            if value in (
-                "Card List",
-                "カードを探す",
-                "詳しく見る",
-                "検索条件を変更",
-            ):
-                continue
-
-            if value.startswith("検索結果"):
-                continue
-
-            name = value
-            break
-
-        # 見出しが取れなかった場合
-        if not name:
-
-            lines = [
-                clean_text(x)
-                for x in block.stripped_strings
-            ]
-
-            for line in lines:
-
-                if not line:
-                    continue
-
-                if line in (
-                    "収録商品",
-                    "カードタイプ",
-                    "作品名",
-                    "参加ユニット",
-                    "カード番号",
-                    "詳しく見る",
-                ):
-                    continue
-
-                if (
-                    "カード番号" in line
-                    or "収録商品" in line
-                    or "カードタイプ" in line
-                ):
-                    continue
-
-                name = line
-                break
-
-        # -------------------------
-        # 画像
-        # -------------------------
-
-        image = get_image(block)
+        # 明らかな誤検出を除外
+        if name in (
+            "カードを探す",
+            "検索結果",
+            "全てのカード",
+            "検索条件を変更",
+            "詳しく見る"
+        ):
+            continue
 
         cards[card_id] = {
             "id": card_id,
             "name": name,
             "product": product,
-            "rarity": rarity,
-            "school": school,
-            "unit": unit,
+            "rarity": get_rarity(card_id),
+            "school": "",
+            "unit": "",
             "kind": kind,
-            "image": image,
+            "image": "",
             "required": 1
         }
+
+    return cards
+
+
+def get_rarity(card_id):
+
+    # 例:
+    # PL!S-bp7-001-R
+    # PL!S-bp7-001-P
+    # PL!S-bp7-001-R＋
+    # LL-PR-001-PR
+
+    parts = card_id.split("-")
+
+    if not parts:
+        return ""
+
+    rarity = parts[-1]
+
+    return rarity
+
+
+def find_images(soup, cards):
+
+    # カード番号が含まれるリンクや要素を探して
+    # その周辺にある画像を取得する
+
+    for card_id in cards:
+
+        elements = soup.find_all(
+            string=re.compile(
+                re.escape(card_id)
+            )
+        )
+
+        for element in elements:
+
+            parent = element.parent
+
+            # 最大10階層まで上へ探す
+            for _ in range(10):
+
+                if not parent:
+                    break
+
+                img = parent.find("img")
+
+                if img:
+
+                    src = (
+                        img.get("src")
+                        or img.get("data-src")
+                        or img.get("data-lazy-src")
+                        or ""
+                    )
+
+                    if src:
+
+                        cards[card_id]["image"] = urljoin(
+                            BASE,
+                            src
+                        )
+
+                        break
+
+                parent = parent.parent
+
+            if cards[card_id]["image"]:
+                break
 
     return cards
 
@@ -321,22 +206,45 @@ def main():
 
     MAX_PAGES = 300
 
-    for page in range(1, MAX_PAGES + 1):
+    for page in range(
+        1,
+        MAX_PAGES + 1
+    ):
 
-        print("取得中:", page, "ページ")
+        print(
+            "取得中:",
+            page,
+            "ページ"
+        )
 
         try:
-            final_url, soup = get_page(page)
+
+            soup = get_page(page)
 
         except Exception as e:
-            print("ページ取得エラー:", e)
+
+            print(
+                "ページ取得エラー:",
+                e
+            )
+
             break
 
-        found_cards = parse_cards(soup)
+        page_cards = parse_cards(
+            soup
+        )
+
+        # 画像も取得
+        page_cards = find_images(
+            soup,
+            page_cards
+        )
 
         before = len(cards)
 
-        cards.update(found_cards)
+        cards.update(
+            page_cards
+        )
 
         found = len(cards) - before
 
@@ -348,12 +256,16 @@ def main():
             "件"
         )
 
-        # 2ページ目以降で新規カードがなくなったら終了
+        # 2ページ目以降でカードがなくなったら終了
         if page > 1 and found == 0:
-            print("新しいカードがないため終了します")
+
+            print(
+                "新しいカードがないため終了します"
+            )
+
             break
 
-        time.sleep(0.5)
+        time.sleep(0.3)
 
     result = sorted(
         cards.values(),
@@ -362,11 +274,15 @@ def main():
 
     print()
     print("==============================")
-    print("最終取得件数:", len(result))
+    print(
+        "最終取得件数:",
+        len(result)
+    )
     print("==============================")
 
     # 安全装置
     if len(result) < 2000:
+
         raise RuntimeError(
             "取得件数が少なすぎるため安全停止しました: "
             + str(len(result))
@@ -374,7 +290,7 @@ def main():
         )
 
     os.makedirs(
-        os.path.dirname(OUTPUT),
+        "data",
         exist_ok=True
     )
 
@@ -391,8 +307,14 @@ def main():
             indent=2
         )
 
-    print("カードデータを更新しました")
-    print("保存先:", OUTPUT)
+    print(
+        "カードデータを更新しました"
+    )
+
+    print(
+        "保存先:",
+        OUTPUT
+    )
 
 
 if __name__ == "__main__":
