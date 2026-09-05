@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ラブカ 在庫管理</title>
+<style>
+:root{--bg:#f6f7fb;--card:#fff;--text:#20232a;--muted:#6b7280;--line:#e5e7eb;--accent:#8b5cf6;--danger:#ef4444;--ok:#10b981;--warn:#f59e0b}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,"Noto Sans JP",sans-serif}
+header{background:linear-gradient(135deg,#7c3aed,#ec4899);color:#fff;padding:24px 20px}
+header .inner{max-width:1200px;margin:auto}h1{margin:0 0 5px;font-size:26px}.sub{opacity:.9;font-size:13px}
+main{max-width:1200px;margin:18px auto;padding:0 14px}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:14px}.stat{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:15px}.stat b{display:block;font-size:23px}.stat span{font-size:12px;color:var(--muted)}
+.toolbar{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:14px;display:flex;gap:8px;flex-wrap:wrap}
+input,select,button{font:inherit}input,select{border:1px solid #d1d5db;border-radius:9px;padding:9px 10px;background:#fff}#search{flex:1;min-width:220px}
+button{border:0;border-radius:9px;padding:9px 12px;cursor:pointer;background:#eee}button.primary{background:var(--accent);color:white}button.danger{background:#fee2e2;color:#991b1b}
+.table-wrap{background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:auto}
+table{width:100%;border-collapse:collapse;min-width:760px}th,td{padding:11px 12px;border-bottom:1px solid var(--line);text-align:left;font-size:13px}th{background:#fafafa;position:sticky;top:0;z-index:1}
+.card-name{background:none;padding:0;color:inherit;text-align:left}.card-name:hover{color:var(--accent);text-decoration:underline}.badge{display:inline-block;padding:3px 7px;border-radius:999px;background:#f3f4f6;font-size:11px}.qty{display:flex;align-items:center;gap:7px}.qty button{width:30px;height:30px;padding:0;font-size:18px}.qty strong{min-width:28px;text-align:center}.need{font-weight:700}.ok{color:var(--ok)}.warn{color:var(--warn)}.bad{color:var(--danger)}
+.card-link{color:#6d28d9;text-decoration:underline;cursor:pointer}.empty{text-align:center;padding:40px;color:var(--muted)}
+.modal{position:fixed;inset:0;background:#0008;display:none;align-items:center;justify-content:center;padding:15px}.modal.show{display:flex}.dialog{background:white;border-radius:16px;max-width:700px;width:100%;padding:20px}.dialog h2{margin-top:0}.help{font-size:13px;color:var(--muted);line-height:1.7}.drop{border:2px dashed #c4b5fd;padding:25px;text-align:center;border-radius:12px;margin:12px 0}
+footer{max-width:1200px;margin:15px auto 30px;padding:0 14px;color:var(--muted);font-size:12px}
+@media(max-width:700px){.stats{grid-template-columns:repeat(2,1fr)}header{padding:18px 14px}.toolbar{padding:10px}}
+.image-modal{position:fixed;inset:0;background:#000b;display:none;align-items:center;justify-content:center;padding:20px;z-index:20}.image-modal.show{display:flex}.image-box{position:relative;background:#fff;border-radius:16px;padding:12px;max-width:min(92vw,520px);max-height:94vh;text-align:center}.image-box img{display:block;max-width:100%;max-height:78vh;margin:auto;object-fit:contain}.image-title{padding:8px 4px 2px;font-weight:700}.image-close{position:absolute;right:-10px;top:-10px;width:36px;height:36px;border-radius:50%;background:#fff;box-shadow:0 2px 10px #0004;font-size:20px}.image-note{font-size:11px;color:#777;margin-top:3px}</style>
+
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#7c3aed">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+
+</head>
+<body>
+<header><div class="inner"><h1>💜 ラブカ 在庫管理</h1><div class="sub">ラブライブ！シリーズ オフィシャルカードゲーム用</div></div></header>
+<main>
+<section class="stats">
+ <div class="stat"><b id="cardCount">0</b><span>登録カード種類</span></div>
+ <div class="stat"><b id="ownedCount">0</b><span>総所持枚数</span></div>
+ <div class="stat"><b id="missingCount">0</b><span>不足枚数（必要数との差）</span></div>
+ <div class="stat"><b id="completeCount">0</b><span>必要数を満たしたカード</span></div>
+</section>
+<section class="toolbar">
+ <input id="search" placeholder="カード名・カード番号で検索">
+ <select id="typeFilter"><option value="">カード種別：すべて</option><option value="メンバー">キャラクター</option><option value="ライブ">ライブ</option><option value="エネルギー">エネルギー</option></select>
+ <select id="schoolFilter"><option value="">作品・学校：すべて</option></select>
+ <select id="unitFilter"><option value="">ユニット：すべて</option></select>
+ <select id="setFilter"><option value="">収録商品：すべて</option></select>
+ <select id="rarityFilter"><option value="">レアリティ：すべて</option></select>
+ <select id="sortFilter"><option value="id">並び：カード番号</option><option value="name">カード名 A→Z</option><option value="nameDesc">カード名 Z→A</option><option value="school">作品・学校</option><option value="unit">ユニット</option></select>
+ <select id="statusFilter"><option value="">状態：すべて</option><option value="missing">不足のみ</option><option value="zero">0枚のみ</option><option value="complete">必要数達成</option></select>
+ <button class="primary" onclick="openImport()">📥 カードマスターCSV</button>
+ <button onclick="exportCSV()">📤 在庫CSV出力</button>
+ <button class="danger" onclick="resetInventory()">在庫リセット</button>
+</section>
+<div class="table-wrap">
+<table><thead><tr><th>カード番号</th><th>カード名</th><th>種別</th><th>レアリティ</th><th>収録商品</th><th>所持</th><th>必要</th><th>状態</th></tr></thead>
+<tbody id="rows"></tbody></table>
+</div>
+</main>
+<footer>データはこのブラウザのLocalStorageに保存されます。カードマスターはCSVで追加・更新できます。</footer>
+
+<div class="image-modal" id="imageModal" onclick="if(event.target===this)closeImage()"><div class="image-box"><button class="image-close" onclick="closeImage()">×</button><img id="cardImage" alt="カード画像"><div class="image-title" id="imageTitle"></div><div class="image-note">公式カードリストの画像URLを登録すると表示できます</div></div></div>
+<div class="modal" id="modal">
+<div class="dialog">
+<h2>カードマスターCSVを読み込む</h2>
+<div class="help">
+CSV形式：<b>カード番号,カード名,レアリティ,収録商品,必要枚数,作品・学校,ユニット,画像URL,カード種別</b><br>
+1行目は見出しでも構いません。既存のカード番号は情報を更新し、所持枚数は維持します。<br>
+例：<code>PL!-bp7-001-R,高海千歌,R,ブースターパック MELLOW MOMENT,4</code>
+</div>
+<div class="drop">
+<input type="file" id="csvFile" accept=".csv,text/csv">
+</div>
+<button class="primary" onclick="importCSV()">読み込む</button>
+<button onclick="closeImport()">閉じる</button>
+</div></div>
+<div class="modal" id="cardModal"><div class="dialog" style="max-width:520px;text-align:center"><button onclick="closeCard()" style="float:right">✕</button><h2 id="cardTitle"></h2><img id="cardImage" style="max-width:100%;max-height:70vh;object-fit:contain;border-radius:10px"><p id="cardMeta" class="help"></p><p id="noImage" class="help" style="display:none">画像URLが登録されていません。カードマスターCSVの6列目に画像URLを指定してください。</p></div></div>
+
+<script>
+const KEY="loveca_inventory_v1";
+const MASTER_KEY="loveca_master_v1";
+
+/* 公式カードリストで確認できる現行カードを初期サンプルとして収録。
+   CSVで全カードリストを追加すれば、そのまま全カード管理に拡張できます。 */
+const seed=[
+["PL!S-bp7-001-R","高海千歌","R","ブースターパック MELLOW MOMENT",4,"Aqours","Aqours"],
+["PL!S-bp7-001-P","高海千歌","P","ブースターパック MELLOW MOMENT",4,"Aqours","Aqours"],
+["PL!S-bp7-002-R","桜内梨子","R","ブースターパック MELLOW MOMENT",4,"Aqours","Aqours"],
+["PL!S-bp7-002-P","桜内梨子","P","ブースターパック MELLOW MOMENT",4,"Aqours","Aqours"],
+["PL!SP-bp7-001-R","澁谷かのん","R","ブースターパック MELLOW MOMENT",4,"Liella!","Liella!"],
+["PL!SP-bp7-001-P","澁谷かのん","P","ブースターパック MELLOW MOMENT",4,"Liella!","Liella!"],
+["PL!SP-bp7-002-R","唐 可可","R","ブースターパック MELLOW MOMENT",4,"Liella!","Liella!"],
+["PL!-bp3-001-R","高坂穂乃果","R","ブースターパック　夏、はじまる。",4],
+["PL!-bp3-001-P","高坂穂乃果","P","ブースターパック　夏、はじまる。",4],
+["PL!-bp3-002-R","絢瀬絵里","R","ブースターパック　夏、はじまる。",4],
+["PL!-bp3-012-N","南 ことり","N","ブースターパック　夏、はじまる。",4],
+["PL!-bp3-014-N","星空 凛","N","ブースターパック　夏、はじまる。",4],
+["PL!-bp3-006-N","津島善子","N","ブースターパック　夏、はじまる。",4],
+["PL!N-bp3-022-N","三船栞子","N","ブースターパック　夏、はじまる。",4],
+["PL!-bp3-005-N","宮下 愛","N","ブースターパック　夏、はじまる。",4],
+["PL!-bp3-004","園田海未","-","ブースターパック　夏、はじまる。",4],
+["PL!-bp3-020-SECL","Snow halation","SECL","ブースターパック Anniversary 2026",4],
+["PL!-bp3-012-RM","南 ことり","RM","ブースターパック Anniversary 2026",4],
+["PL!-bp3-001-R＋","高坂穂乃果","R＋","ブースターパック Anniversary 2026",4],
+["PL!SP-bp1-023-SRL","START!! True dreams","SRL","プレミアムブースター ラブライブ！スーパースター!! DUO",4],
+["PL!SP-bp1-024-SRL","Tiny Stars","SRL","プレミアムブースター ラブライブ！スーパースター!! DUO",4],
+["PL!SP-bp1-025-SECL","Starlight Prologue","SECL","プレミアムブースター ラブライブ！スーパースター!! DUO",4],
+["PL!SP-bp1-026-SECL","未来予報ハレルヤ！","SECL","プレミアムブースター ラブライブ！スーパースター!! DUO",4],
+["PL!SP-bp1-027-SRL","Sing！Shine！Smile！","SRL","プレミアムブースター ラブライブ！スーパースター!! DUO",4],
+["PL!SP-bp2-023-SRL","Go!! リスタート","SRL","プレミアムブースター ラブライブ！スーパースター!! DUO",4],
+["PL!SP-bp2-024-SRL","ビタミンSUMMER!","SRL","プレミアムブースター ラブライブ！スーパースター!! DUO",4],
+["PL!SP-bp2-025-SRL","Bubble Rise","SRL","プレミアムブースター ラブライブ！スーパースター!! DUO",4],
+["PL!SP-bp4-024-SECL","ノンフィクション!!","SECL","プレミアムブースター ラブライブ！スーパースター!! DUO",4],
+["LL-bp1-E01-RE","エネルギーカード","RE","ブースターパック Anniversary 2026",4]
+];
+
+let master=JSON.parse(localStorage.getItem(MASTER_KEY)||"null");
+let inv=JSON.parse(localStorage.getItem(KEY)||"{}");
+function inferSchool(id,name){
+ const x=String(id);
+ if(x.startsWith("PL!-")) return "μ's";
+ if(x.startsWith("PL!S-")) return "Aqours";
+ if(x.startsWith("PL!N-")) return "虹ヶ咲";
+ if(x.startsWith("PL!SP-")) return "Liella!";
+ if(x.startsWith("PL!HS-")) return "蓮ノ空";
+ return "その他";
+}
+function inferType(id,name){
+ const x=String(id), n=String(name);
+ if(/^LL-.*-E/.test(x)||/エネルギー/.test(n)) return "エネルギー";
+ if(/^PL!.*-.*-\d+-(?:SECL|SRL|SEC|SR)/.test(x) && /[！!？?]|[A-Za-z]/.test(n)) return "ライブ";
+ const liveNames=["Snow halation","MY舞☆TONIGHT","START!! True dreams","Tiny Stars","Starlight Prologue","未来予報ハレルヤ！","Sing！Shine！Smile！","Go!! リスタート","ビタミンSUMMER!","Bubble Rise","No brand girls"];
+ if(liveNames.includes(n)) return "ライブ";
+ return "メンバー";
+}
+function inferUnit(school,name){
+ const n=String(name);
+ const maps={
+  "μ's":{"高坂穂乃果":"Printemps","南 ことり":"Printemps","園田海未":"lily white","絢瀬絵里":"BiBi","西木野真姫":"BiBi","矢澤にこ":"BiBi","星空 凛":"lily white","小泉花陽":"Printemps","東條 希":"lily white"},
+  "Aqours":{"高海千歌":"CYaRon！","渡辺 曜":"CYaRon！","黒澤ルビィ":"CYaRon！","松浦果南":"AZALEA","黒澤ダイヤ":"AZALEA","国木田花丸":"AZALEA","桜内梨子":"Guilty Kiss","津島善子":"Guilty Kiss","小原鞠莉":"Guilty Kiss"},
+  "虹ヶ咲":{"上原歩夢":"A・ZU・NA","優木せつ菜":"A・ZU・NA","桜坂しずく":"A・ZU・NA","宮下 愛":"DiverDiva","朝香果林":"DiverDiva","近江彼方":"QU4RTZ","中須かすみ":"QU4RTZ","エマ・ヴェルデ":"QU4RTZ","天王寺璃奈":"QU4RTZ","鐘 嵐珠":"R3BIRTH","三船栞子":"R3BIRTH","ミア・テイラー":"R3BIRTH"},
+  "Liella!":{"澁谷かのん":"CatChu!","唐 可可":"CatChu!","嵐 千砂都":"CatChu!","平安名すみれ":"KALEIDOSCORE","葉月 恋":"KALEIDOSCORE","桜小路きな子":"5yncri5e!","米女メイ":"5yncri5e!","若菜四季":"5yncri5e!","鬼塚夏美":"5yncri5e!"},
+  "蓮ノ空":{"日野下花帆":"スリーズブーケ","乙宗 梢":"スリーズブーケ","村野さやか":"DOLLCHESTRA","夕霧綴理":"DOLLCHESTRA","大沢瑠璃乃":"みらくらぱーく！","藤島 慈":"みらくらぱーく！","百生吟子":"Edel Note","徒町小鈴":"Edel Note","安養寺姫芽":"Edel Note"}
+ };
+ return (maps[school]&&maps[school][n])||"ユニットなし";
+}
+if(!master){master=seed.map(x=>({id:x[0],name:x[1],rarity:x[2],set:x[3],need:+x[4]||4,school:x[5]||inferSchool(x[0],x[1]),unit:x[6]||inferUnit(x[5]||inferSchool(x[0],x[1]),x[1]),type:x[7]||inferType(x[0],x[1])}));saveMaster();}
+else { master.forEach(c=>{c.school=c.school||inferSchool(c.id,c.name);c.unit=c.unit||inferUnit(c.school,c.name);c.type=c.type||inferType(c.id,c.name);}); saveMaster(); }
+function save(){localStorage.setItem(KEY,JSON.stringify(inv));}
+function saveMaster(){localStorage.setItem(MASTER_KEY,JSON.stringify(master));}
+function render(){
+ const q=document.getElementById("search").value.trim().toLowerCase();
+ const sf=document.getElementById("setFilter").value, rf=document.getElementById("rarityFilter").value, st=document.getElementById("statusFilter").value;
+ const school=document.getElementById("schoolFilter").value, unit=document.getElementById("unitFilter").value, sort=document.getElementById("sortFilter").value, type=document.getElementById("typeFilter").value;
+ const sets=[...new Set(master.map(x=>x.set))].sort(), rs=[...new Set(master.map(x=>x.rarity))].sort(), schools=[...new Set(master.map(x=>x.school||"その他"))].sort(), units=[...new Set(master.map(x=>x.unit||"ユニットなし"))].sort();
+ const s=document.getElementById("setFilter"),r=document.getElementById("rarityFilter");
+ const sv=s.value,rv=r.value, oldSchool=school, oldUnit=unit;
+ const sh=document.getElementById("schoolFilter"), un=document.getElementById("unitFilter");
+ sh.innerHTML='<option value="">作品・学校：すべて</option>'+schools.map(x=>`<option>${esc(x)}</option>`).join("");sh.value=oldSchool;
+ un.innerHTML='<option value="">ユニット：すべて</option>'+units.map(x=>`<option>${esc(x)}</option>`).join("");un.value=oldUnit;
+ s.innerHTML='<option value="">収録商品：すべて</option>'+sets.map(x=>`<option>${esc(x)}</option>`).join("");s.value=sv;
+ r.innerHTML='<option value="">レアリティ：すべて</option>'+rs.map(x=>`<option>${esc(x)}</option>`).join("");r.value=rv;
+ let owned=0,missing=0,complete=0;
+ const rows=master.filter(c=>{
+   const n=inv[c.id]||0, text=(c.id+" "+c.name+" "+c.set).toLowerCase();
+   return (!q||text.includes(q))&&(!type||(c.type||"メンバー")===type)&&(!school||c.school===school)&&(!unit||c.unit===unit)&&(!sf||c.set===sf)&&(!rf||c.rarity===rf)&&(!st||(st==="missing"&&n<c.need)||(st==="zero"&&n===0)||(st==="complete"&&n>=c.need));
+ });
+ rows.sort((a,b)=>{
+   const A=(sort==="name"||sort==="nameDesc")?a.name:sort==="school"?a.school:sort==="unit"?a.unit:a.id;
+   const B=(sort==="name"||sort==="nameDesc")?b.name:sort==="school"?b.school:sort==="unit"?b.unit:b.id;
+   const cmp=String(A).localeCompare(String(B),"ja");
+   return sort==="nameDesc"?-cmp:cmp;
+ });
+ master.forEach(c=>{let n=inv[c.id]||0;owned+=n;missing+=Math.max(0,c.need-n);if(n>=c.need)complete++;});
+ document.getElementById("cardCount").textContent=master.length;
+ document.getElementById("ownedCount").textContent=owned;
+ document.getElementById("missingCount").textContent=missing;
+ document.getElementById("completeCount").textContent=complete;
+ document.getElementById("rows").innerHTML=rows.length?rows.map(c=>{
+   const n=inv[c.id]||0,d=c.need-n;
+   const cls=d<=0?"ok":n===0?"bad":"warn";
+   const status=d<=0?"達成":`あと ${d}枚`;
+   return `<tr><td><code>${esc(c.id)}</code></td><td><span class="card-link" onclick="showImage('${js(c.id)}','${js(c.name)}','${js(c.image||"")}')"><b>${esc(c.name)}</b></span></td><td><span class="badge">${esc(c.rarity)}</span></td><td>${esc(c.set)}</td><td><div class="qty"><button onclick="change('${js(c.id)}',-1)">−</button><strong>${n}</strong><button onclick="change('${js(c.id)}',1)">＋</button></div></td><td class="need">${c.need}</td><td class="${cls}">${status}</td></tr>`;
+ }).join(""):`<tr><td colspan="8" class="empty">該当するカードがありません</td></tr>`;
+}
+function change(id,d){inv[id]=Math.max(0,(inv[id]||0)+d);save();render();}
+function esc(s){return String(s).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]));}
+function js(s){return String(s).replace(/\\/g,"\\\\").replace(/'/g,"\\'");}
+function showImage(id,name,url){document.getElementById("imageTitle").textContent=name+"（"+id+"）";const img=document.getElementById("cardImage");img.onerror=()=>{img.removeAttribute("src");img.alt="画像が登録されていません";};if(url)img.src=url;else{img.removeAttribute("src");img.alt="画像が登録されていません";}document.getElementById("imageModal").classList.add("show")}
+function closeImage(){document.getElementById("imageModal").classList.remove("show")}
+document.addEventListener("keydown",e=>{if(e.key==="Escape"){closeImage();closeImport()}});
+function openImport(){document.getElementById("modal").classList.add("show")}
+function closeImport(){document.getElementById("modal").classList.remove("show")}
+function parseCSV(text){
+ const lines=text.replace(/^\uFEFF/,"").split(/\r?\n/).filter(x=>x.trim());
+ return lines.map(line=>{
+   const out=[];let cur="",q=false;
+   for(let i=0;i<line.length;i++){const ch=line[i];if(ch==='"'&&line[i+1]==='"'){cur+='"';i++;continue}if(ch==='"'){q=!q;continue}if(ch===','&&!q){out.push(cur.trim());cur="";}else cur+=ch}
+   out.push(cur.trim());return out;
+ });
+}
+function importCSV(){
+ const f=document.getElementById("csvFile").files[0];if(!f)return alert("CSVファイルを選択してください。");
+ const reader=new FileReader();
+ reader.onload=()=>{
+  const data=parseCSV(reader.result);let count=0;
+  data.forEach((a,i)=>{
+   if(i===0&&a[0].includes("カード"))return;
+   if(a.length<4||!a[0]||!a[1])return;
+   const id=a[0], old=master.find(x=>x.id===id);
+   const obj={id,name:a[1],rarity:a[2]||"-",set:a[3]||"-",need:+a[4]||4,image:a[5]||""};
+   if(old)Object.assign(old,obj);else master.push(obj);count++;
+  });
+  saveMaster();render();closeImport();alert(`${count}件のカード情報を読み込みました。`);
+ };reader.readAsText(f,"UTF-8");
+}
+function exportCSV(){
+ const lines=[["カード番号","カード名","カード種別","レアリティ","収録商品","所持枚数","必要枚数","不足枚数","作品・学校","ユニット","画像URL"],...master.map(c=>[c.id,c.name,c.type||"メンバー",c.rarity,c.set,inv[c.id]||0,c.need,Math.max(0,c.need-(inv[c.id]||0)),c.school,c.unit,c.image||""])];
+ const csv=lines.map(a=>a.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(",")).join("\r\n");
+ const blob=new Blob(["\uFEFF"+csv],{type:"text/csv;charset=utf-8"}),a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="loveca_inventory.csv";a.click();URL.revokeObjectURL(a.href);
+}
+function showCard(id){
+ const c=master.find(x=>x.id===id); if(!c)return;
+ document.getElementById("cardTitle").textContent=c.name;
+ document.getElementById("cardMeta").textContent=`${c.id} / ${c.type||"メンバー"} / ${c.rarity} / ${c.school||"その他"} / ${c.unit||"ユニットなし"}`;
+ const img=document.getElementById("cardImage"), no=document.getElementById("noImage");
+ if(c.image){img.src=c.image;img.style.display="block";no.style.display="none";img.onerror=()=>{img.style.display="none";no.style.display="block";};}
+ else {img.removeAttribute("src");img.style.display="none";no.style.display="block";}
+ document.getElementById("cardModal").classList.add("show");
+}
+function closeCard(){document.getElementById("cardModal").classList.remove("show")}
+function resetInventory(){if(confirm("所持枚数をすべて0にします。カードマスターは残ります。")){inv={};save();render();}}
+["search","typeFilter","schoolFilter","unitFilter","setFilter","rarityFilter","sortFilter","statusFilter"].forEach(id=>document.getElementById(id).addEventListener("input",render));
+render();
+</script>
+
+<script>
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("./sw.js").catch(() => {});
+  });
+}
+</script>
+
+</body>
+</html>

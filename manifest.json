@@ -1,0 +1,31 @@
+{
+  "name": "ラブカ在庫管理",
+  "short_name": "ラブカ在庫",
+  "description": "ラブライブ！シリーズ オフィシャルカードゲームのカード在庫管理",
+  "id": "./",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "display_override": [
+    "window-controls-overlay",
+    "standalone"
+  ],
+  "background_color": "#f6f7fb",
+  "theme_color": "#7c3aed",
+  "orientation": "any",
+  "prefer_related_applications": false,
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
