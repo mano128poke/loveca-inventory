@@ -6,8 +6,34 @@ import requests
 from urllib.parse import urljoin
 from bs4 import BeautifulSoup
 
-BASE = "https://llofficial-cardgame.com/cardlist/searchresults/"
+
+# ============================================================
+# 設定
+# ============================================================
+
+WIKI_BASE = "https://wikiwiki.jp/llocardgame/"
+OFFICIAL_BASE = "https://llofficial-cardgame.com/cardlist/searchresults/"
+
 OUTPUT = "data/cards.json"
+
+# 非公式Wikiのカードデータページ
+WIKI_PAGES = [
+    # メンバーカード
+    "data/メンバーカード/μ's",
+    "data/メンバーカード/Aqours",
+    "data/メンバーカード/虹ヶ咲",
+    "data/メンバーカード/Liella!",
+    "data/メンバーカード/蓮ノ空",
+    "data/メンバーカード/その他",
+
+    # ライブカード
+    "data/ライブカード/μ's",
+    "data/ライブカード/Aqours",
+    "data/ライブカード/虹ヶ咲",
+    "data/ライブカード/Liella!",
+    "data/ライブカード/蓮ノ空",
+    "data/ライブカード/その他",
+]
 
 session = requests.Session()
 
@@ -22,300 +48,326 @@ session.headers.update({
 })
 
 
-def get_page(page):
+# ============================================================
+# 共通
+# ============================================================
 
-    params = {
-        "view": "text",
-        "sort": "new"
-    }
-
-    if page > 1:
-        params["page"] = str(page)
-
+def request_page(url):
     response = session.get(
-        BASE,
-        params=params,
+        url,
         timeout=30
     )
 
     response.raise_for_status()
 
-    soup = BeautifulSoup(
+    return BeautifulSoup(
         response.text,
         "html.parser"
     )
 
-    return soup
-
-
-def parse_cards(soup):
-
-    cards = {}
-
-    # ページ全体を改行区切りのテキストにする
-    text = soup.get_text(
-        "\n",
-        strip=True
-    )
-
-    # 空行を除去
-    lines = [
-        line.strip()
-        for line in text.splitlines()
-        if line.strip()
-    ]
-
-    # 公式サイトでは基本的に
-    #
-    # カード名
-    # 収録商品
-    # 商品名
-    # カードタイプ
-    # カードタイプ名
-    # カード番号
-    # カード番号
-    #
-    # の順番になっている
-    #
-    # これを直接解析する
-
-    for i in range(len(lines) - 5):
-
-        if lines[i + 1] != "収録商品":
-            continue
-
-        if lines[i + 3] != "カードタイプ":
-            continue
-
-        if lines[i + 5] != "カード番号":
-            continue
-
-        name = lines[i]
-        product = lines[i + 2]
-        kind = lines[i + 4]
-
-        if i + 6 >= len(lines):
-            continue
-
-        card_id = lines[i + 6]
-
-        # カード番号らしいものだけ採用
-        if not re.match(
-            r"^[A-Za-z0-9!＋+\-_.]+$",
-            card_id
-        ):
-            continue
-
-        # 明らかな誤検出を除外
-        if name in (
-            "カードを探す",
-            "検索結果",
-            "全てのカード",
-            "検索条件を変更",
-            "詳しく見る"
-        ):
-            continue
-
-        cards[card_id] = {
-            "id": card_id,
-            "name": name,
-            "product": product,
-            "rarity": get_rarity(card_id),
-            "school": "",
-            "unit": "",
-            "kind": kind,
-            "image": "",
-            "required": 1
-        }
-
-    return cards
-
 
 def get_rarity(card_id):
+    """
+    カード番号末尾からレアリティを取得。
 
-    # 例:
-    # PL!S-bp7-001-R
-    # PL!S-bp7-001-P
-    # PL!S-bp7-001-R＋
-    # LL-PR-001-PR
+    例:
+    PL!-bp7-001-R
+    PL!-bp7-001-P
+    PL!-bp7-001-R＋
+    """
 
     parts = card_id.split("-")
 
     if not parts:
         return ""
 
-    rarity = parts[-1]
+    last = parts[-1]
 
-    return rarity
+    # Wikiの通常カード番号にはレアリティがない場合がある
+    if re.fullmatch(
+        r"(?:R|SR|L|SEC|P|PR|SD|PE|SRE|RM|SECL|SIR|SP|＋|\+)+",
+        last
+    ):
+        return last
+
+    return ""
 
 
-def find_images(soup, cards):
+def is_card_id(value):
+    """
+    ラブカのカード番号らしい文字列か判定。
+    """
 
-    # カード番号が含まれるリンクや要素を探して
-    # その周辺にある画像を取得する
+    value = value.strip()
 
-    for card_id in cards:
+    # 通常カード
+    if re.match(
+        r"^(PL!|LL-)[A-Za-z0-9!＋+\-_.]+$",
+        value
+    ):
+        return True
 
-        elements = soup.find_all(
-            string=re.compile(
-                re.escape(card_id)
+    return False
+
+
+# ============================================================
+# Wiki
+# ============================================================
+
+def parse_wiki_card_cell(text):
+    """
+    Wikiの
+
+    PL!-bp5-006 西木野真姫
+
+    のようなセルから
+    カード番号とカード名を取り出す。
+    """
+
+    text = re.sub(
+        r"\s+",
+        " ",
+        text
+    ).strip()
+
+    # 先頭のカード番号を取得
+    match = re.match(
+        r"^((?:PL!|LL-)[A-Za-z0-9!＋+\-_.]+)\s+(.+)$",
+        text
+    )
+
+    if not match:
+        return None
+
+    card_id = match.group(1).strip()
+    name = match.group(2).strip()
+
+    if not is_card_id(card_id):
+        return None
+
+    return card_id, name
+
+
+def parse_wiki_page(soup):
+    """
+    Wikiの表からカードを取得する。
+    """
+
+    cards = {}
+
+    for table in soup.find_all("table"):
+
+        rows = table.find_all("tr")
+
+        for row in rows:
+
+            cells = row.find_all(
+                ["th", "td"]
             )
-        )
 
-        for element in elements:
+            if not cells:
+                continue
 
-            parent = element.parent
+            values = [
+                cell.get_text(
+                    " ",
+                    strip=True
+                )
+                for cell in cells
+            ]
 
-            # 最大10階層まで上へ探す
-            for _ in range(10):
+            if not values:
+                continue
 
-                if not parent:
-                    break
+            # 先頭セルに
+            # カード番号 / カード名
+            # が入っている
+            parsed = parse_wiki_card_cell(
+                values[0]
+            )
 
-                img = parent.find("img")
+            if not parsed:
+                continue
 
-                if img:
+            card_id, name = parsed
 
-                    src = (
-                        img.get("src")
-                        or img.get("data-src")
-                        or img.get("data-lazy-src")
-                        or ""
-                    )
+            # 表の最後に「初登場セット」がある
+            product = ""
 
-                    if src:
+            if len(values) >= 2:
+                # 末尾の値を商品名として扱う
+                candidate = values[-1]
 
-                        cards[card_id]["image"] = urljoin(
-                            BASE,
-                            src
-                        )
+                if candidate not in (
+                    "初登場セット",
+                    "カード名",
+                    "カード番号/カード名"
+                ):
+                    product = candidate
 
-                        break
+            # メンバー / ライブを判定
+            page_text = soup.get_text(
+                " ",
+                strip=True
+            )
 
-                parent = parent.parent
+            if "メンバーカード" in page_text:
+                kind = "メンバー"
 
-            if cards[card_id]["image"]:
-                break
+            elif "ライブカード" in page_text:
+                kind = "ライブ"
+
+            else:
+                kind = ""
+
+            cards[card_id] = {
+                "id": card_id,
+                "name": name,
+                "product": product,
+                "rarity": get_rarity(card_id),
+                "school": "",
+                "unit": "",
+                "kind": kind,
+                "image": "",
+                "required": 1
+            }
 
     return cards
 
 
-def main():
+def get_wiki_cards():
+    """
+    非公式Wikiからカード一覧を取得。
+    """
 
     cards = {}
 
-    MAX_PAGES = 300
+    print()
+    print("==============================")
+    print("非公式Wikiからカード一覧を取得")
+    print("==============================")
 
-    for page in range(
-        1,
-        MAX_PAGES + 1
-    ):
+    success_pages = 0
+
+    for page_path in WIKI_PAGES:
+
+        url = urljoin(
+            WIKI_BASE,
+            page_path
+        )
 
         print(
-            "取得中:",
-            page,
-            "ページ"
+            "Wiki取得:",
+            page_path
         )
 
         try:
 
-            soup = get_page(page)
+            soup = request_page(url)
+
+            page_cards = parse_wiki_page(
+                soup
+            )
+
+            print(
+                "  →",
+                len(page_cards),
+                "件"
+            )
+
+            cards.update(
+                page_cards
+            )
+
+            if page_cards:
+                success_pages += 1
 
         except Exception as e:
 
             print(
-                "ページ取得エラー:",
+                "  → 取得失敗:",
                 e
             )
 
-            break
-
-        page_cards = parse_cards(
-            soup
-        )
-
-        # 画像も取得
-        page_cards = find_images(
-            soup,
-            page_cards
-        )
-
-        before = len(cards)
-
-        cards.update(
-            page_cards
-        )
-
-        found = len(cards) - before
-
-        print(
-            "このページ:",
-            found,
-            "件 / 合計:",
-            len(cards),
-            "件"
-        )
-
-        # 2ページ目以降でカードがなくなったら終了
-        if page > 1 and found == 0:
-
-            print(
-                "新しいカードがないため終了します"
-            )
-
-            break
-
         time.sleep(0.3)
 
-    result = sorted(
-        cards.values(),
-        key=lambda x: x["id"]
-    )
-
     print()
-    print("==============================")
     print(
-        "最終取得件数:",
-        len(result)
+        "Wiki取得完了:",
+        len(cards),
+        "件"
     )
-    print("==============================")
 
-    # 安全装置
-    if len(result) < 2000:
+    return cards
 
-        raise RuntimeError(
-            "取得件数が少なすぎるため安全停止しました: "
-            + str(len(result))
-            + " 件"
+
+# ============================================================
+# 公式サイト
+# ============================================================
+
+def official_search(card_id):
+    """
+    公式サイトでカード番号を検索。
+
+    公式サイトが取得できない場合は None。
+    """
+
+    try:
+
+        params = {
+            "view": "text",
+            "keyword1": card_id,
+            "keyword_type1": "and"
+        }
+
+        response = session.get(
+            OFFICIAL_BASE,
+            params=params,
+            timeout=30
         )
 
-    os.makedirs(
-        "data",
-        exist_ok=True
-    )
+        response.raise_for_status()
 
-    with open(
-        OUTPUT,
-        "w",
-        encoding="utf-8"
-    ) as file:
-
-        json.dump(
-            result,
-            file,
-            ensure_ascii=False,
-            indent=2
+        return BeautifulSoup(
+            response.text,
+            "html.parser"
         )
 
-    print(
-        "カードデータを更新しました"
+    except Exception as e:
+
+        print(
+            "公式検索失敗:",
+            card_id,
+            e
+        )
+
+        return None
+
+
+def parse_official_card(
+    soup,
+    card_id
+):
+    """
+    公式サイトからカード情報を補完。
+
+    公式側のHTML仕様が変わっていても、
+    取得できなければNoneを返して
+    Wiki/既存データを維持する。
+    """
+
+    if soup is None:
+        return None
+
+    text = soup.get_text(
+        "\n",
+        strip=True
     )
 
-    print(
-        "保存先:",
-        OUTPUT
-    )
+    lines = [
+        line.strip()
+        for line in text.splitlines()
+        if line.strip()
+    ]
 
-
-if __name__ == "__main__":
-    main()
+    # カード番号がページ
