@@ -351,17 +351,52 @@ select {
     max-height: 88vh;
   }
 }
+  .header-buttons {
+  margin-top: 14px;
+}
+
+.github-button {
+  display: inline-block;
+  padding: 12px 18px;
+  border-radius: 10px;
+  background: #24292f;
+  color: white;
+  text-decoration: none;
+  font-size: 15px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.github-button:hover {
+  opacity: 0.9;
+}
+
+.github-button:active {
+  opacity: 0.75;
+}
 </style>
 </head>
 
 <body>
-
 <header>
   <h1>ラブカ コレクション管理</h1>
+
   <div id="syncInfo">
     カードデータ読み込み中...
   </div>
+
+  <div class="header-buttons">
+    <a
+      href="https://github.com/mano128poke/loveca-inventory/actions/workflows/sync.yml"
+      target="_blank"
+      rel="noopener noreferrer"
+      class="github-button"
+    >
+      🔄 カード情報を更新
+    </a>
+  </div>
 </header>
+
 
 <div class="container">
 
