@@ -1,306 +1,354 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="ja">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <title>ラブカ コレクション管理</title>
 
-<link rel="manifest" href="manifest.json">
-
 <style>
-*{
-  box-sizing:border-box;
+* {
+  box-sizing: border-box;
 }
 
-body{
-  font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
-  margin:0;
-  background:#f7f7f9;
-  color:#222;
+body {
+  margin: 0;
+  background: #f5f5f7;
+  color: #222;
+  font-family:
+    -apple-system,
+    BlinkMacSystemFont,
+    "Noto Sans JP",
+    "Yu Gothic",
+    sans-serif;
 }
 
-header{
-  background:#fff;
-  padding:16px;
-  border-bottom:1px solid #ddd;
-  position:sticky;
-  top:0;
-  z-index:10;
+header {
+  background: white;
+  padding: 28px 16px 22px;
+  border-bottom: 1px solid #ddd;
 }
 
-.wrap{
-  max-width:900px;
-  margin:auto;
-  padding:12px;
+header h1 {
+  margin: 0 0 12px;
+  font-size: 28px;
 }
 
-h1{
-  font-size:20px;
-  margin:0 0 6px;
+#syncInfo {
+  color: #666;
+  font-size: 18px;
 }
 
-.status{
-  font-size:13px;
-  color:#666;
+.container {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 16px;
 }
 
-/* 統計 */
-
-.stats{
-  background:#fff;
-  border-radius:12px;
-  padding:14px;
-  margin:10px 0;
+.stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  margin-bottom: 16px;
 }
 
-.stat-main{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  gap:10px;
+.stat {
+  background: white;
+  border-radius: 14px;
+  padding: 14px;
+  text-align: center;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
 }
 
-.stat-number{
-  font-size:18px;
-  font-weight:bold;
+.stat-label {
+  font-size: 13px;
+  color: #777;
 }
 
-.stat-percent{
-  font-size:14px;
-  color:#666;
+.stat-value {
+  margin-top: 5px;
+  font-size: 22px;
+  font-weight: bold;
 }
 
-.stat-detail{
-  margin-top:8px;
-  font-size:13px;
-  color:#555;
+.filters {
+  background: white;
+  border-radius: 16px;
+  padding: 14px;
+  margin-bottom: 16px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
 }
 
-.bar{
-  height:10px;
-  background:#eee;
-  border-radius:9px;
-  overflow:hidden;
-  margin-top:10px;
+.search {
+  width: 100%;
+  padding: 14px;
+  border: 1px solid #ccc;
+  border-radius: 10px;
+  font-size: 16px;
+  margin-bottom: 12px;
 }
 
-.bar i{
-  display:block;
-  height:100%;
-  background:#555;
-  width:0%;
-  transition:width .2s;
+select {
+  width: 100%;
+  padding: 13px;
+  border: 1px solid #ccc;
+  border-radius: 10px;
+  background: white;
+  font-size: 16px;
+  margin-bottom: 10px;
 }
 
-/* 検索 */
-
-input,
-select,
-button{
-  font:inherit;
-  padding:9px;
-  border:1px solid #ccc;
-  border-radius:8px;
-  background:#fff;
+.button-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 
-input{
-  width:100%;
-  margin:8px 0;
+.filter-button {
+  padding: 12px 17px;
+  border: 1px solid #ccc;
+  border-radius: 10px;
+  background: white;
+  font-size: 16px;
+  cursor: pointer;
 }
 
-.filters{
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:8px;
-  margin-bottom:8px;
+.filter-button.active {
+  background: #555;
+  color: white;
+  border-color: #555;
 }
 
-.filters select{
-  width:100%;
+.result-info {
+  color: #666;
+  margin: 14px 4px;
+  font-size: 16px;
 }
 
-/* 追加フィルター */
-
-.extra-filters{
-  display:flex;
-  gap:8px;
-  flex-wrap:wrap;
-  margin:8px 0;
+.cards {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 
-.filter-button{
-  cursor:pointer;
+.card {
+  background: white;
+  border-radius: 18px;
+  padding: 14px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  box-shadow: 0 1px 5px rgba(0,0,0,0.06);
 }
 
-.filter-button.active{
-  background:#555;
-  color:#fff;
-  border-color:#555;
+.card-image-wrap {
+  width: 115px;
+  min-width: 115px;
+  height: 160px;
+  border-radius: 10px;
+  overflow: hidden;
+  background: #eee;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-/* 件数 */
-
-.result-info{
-  font-size:13px;
-  color:#666;
-  margin:10px 2px;
+.card-image {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  cursor: zoom-in;
+  display: block;
 }
 
-/* カード */
-
-.card{
-  background:#fff;
-  border-radius:12px;
-  padding:12px;
-  margin:10px 0;
-  display:flex;
-  gap:12px;
-  align-items:center;
+.no-image {
+  color: #999;
+  font-size: 13px;
+  text-align: center;
 }
 
-.card-image{
-  width:72px;
-  height:100px;
-  flex-shrink:0;
-  object-fit:contain;
-  background:#f2f2f2;
-  border-radius:6px;
+.card-info {
+  flex: 1;
+  min-width: 0;
 }
 
-.card-image.no-image{
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  font-size:10px;
-  color:#999;
+.card-name {
+  font-size: 20px;
+  font-weight: bold;
+  margin-bottom: 7px;
+  word-break: break-word;
 }
 
-.card-info{
-  flex:1;
-  min-width:0;
+.card-meta {
+  color: #666;
+  font-size: 14px;
+  line-height: 1.7;
 }
 
-.card-name{
-  font-weight:bold;
-  word-break:break-word;
+.badge {
+  display: inline-block;
+  background: #eee;
+  color: #555;
+  border-radius: 8px;
+  padding: 2px 7px;
+  margin-right: 4px;
 }
 
-.meta{
-  font-size:12px;
-  color:#666;
-  margin-top:4px;
-  line-height:1.5;
+.inventory {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-left: auto;
 }
 
-.work{
-  display:inline-block;
-  background:#eee;
-  border-radius:5px;
-  padding:2px 5px;
-  margin-right:3px;
+.inventory button {
+  width: 48px;
+  height: 48px;
+  border: 1px solid #ccc;
+  background: white;
+  border-radius: 10px;
+  font-size: 28px;
+  line-height: 1;
+  cursor: pointer;
 }
 
-.qty{
-  display:flex;
-  align-items:center;
-  gap:6px;
-  flex-shrink:0;
+.inventory button:active {
+  background: #eee;
 }
 
-.qty button{
-  width:36px;
-  height:36px;
-  padding:0;
-  font-size:20px;
-  cursor:pointer;
+.inventory-count {
+  min-width: 25px;
+  text-align: center;
+  font-size: 20px;
+  font-weight: bold;
 }
 
-.qty-number{
-  min-width:28px;
-  text-align:center;
-  font-weight:bold;
+.more-button {
+  width: 100%;
+  margin-top: 16px;
+  padding: 15px;
+  border: 1px solid #ccc;
+  border-radius: 12px;
+  background: white;
+  font-size: 16px;
+  cursor: pointer;
 }
 
-/* 所持カード */
-
-.card.owned{
-  border-left:4px solid #555;
+.more-button:active {
+  background: #eee;
 }
 
-/* もっと読む */
+/* =========================
+   画像拡大モーダル
+   ========================= */
 
-.more{
-  width:100%;
-  margin:12px 0 30px;
-  padding:12px;
-  cursor:pointer;
+.image-modal {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
 }
 
-/* 上へ */
-
-.top-button{
-  position:fixed;
-  right:15px;
-  bottom:15px;
-  width:44px;
-  height:44px;
-  border-radius:50%;
-  display:none;
-  z-index:20;
-  box-shadow:0 2px 8px #aaa;
+.image-modal.active {
+  display: flex;
 }
 
-/* スマホ */
+.image-modal-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.88);
+}
 
-@media(max-width:600px){
+.image-modal-content {
+  position: relative;
+  z-index: 1;
+  max-width: 96vw;
+  max-height: 94vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
 
-  .wrap{
-    padding:8px;
+.image-modal-content img {
+  display: block;
+  max-width: 96vw;
+  max-height: 90vh;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  border-radius: 8px;
+  box-shadow: 0 4px 30px rgba(0,0,0,0.5);
+}
+
+.image-modal-close {
+  position: absolute;
+  top: -48px;
+  right: 0;
+  width: 42px;
+  height: 42px;
+  border: none;
+  border-radius: 50%;
+  background: white;
+  color: #333;
+  font-size: 30px;
+  line-height: 42px;
+  padding: 0;
+  cursor: pointer;
+}
+
+@media (max-width: 700px) {
+
+  header h1 {
+    font-size: 25px;
   }
 
-  header{
-    padding:12px;
+  .stats {
+    grid-template-columns: repeat(2, 1fr);
   }
 
-  h1{
-    font-size:18px;
+  .card {
+    padding: 12px;
+    gap: 12px;
   }
 
-  .filters{
-    grid-template-columns:1fr;
+  .card-image-wrap {
+    width: 90px;
+    min-width: 90px;
+    height: 125px;
   }
 
-  .card{
-    padding:9px;
-    gap:9px;
+  .card-name {
+    font-size: 17px;
   }
 
-  .card-image{
-    width:60px;
-    height:84px;
+  .card-meta {
+    font-size: 13px;
   }
 
-  .card-name{
-    font-size:14px;
+  .inventory {
+    gap: 5px;
   }
 
-  .meta{
-    font-size:11px;
+  .inventory button {
+    width: 42px;
+    height: 42px;
+    font-size: 24px;
   }
 
-  .qty{
-    gap:3px;
+  .inventory-count {
+    font-size: 18px;
   }
 
-  .qty button{
-    width:32px;
-    height:32px;
+  .image-modal {
+    padding: 8px;
   }
 
-  .qty-number{
-    min-width:22px;
+  .image-modal-content img {
+    max-width: 96vw;
+    max-height: 88vh;
   }
 }
 </style>
@@ -309,591 +357,968 @@ input{
 <body>
 
 <header>
-  <div class="wrap">
-    <h1>ラブカ コレクション管理</h1>
-    <div id="status" class="status">
-      カードデータを読み込み中…
-    </div>
+  <h1>ラブカ コレクション管理</h1>
+  <div id="syncInfo">
+    カードデータ読み込み中...
   </div>
 </header>
 
-<main class="wrap">
+<div class="container">
 
-  <!-- 統計 -->
-
-  <section class="stats">
-
-    <div class="stat-main">
-      <div>
-        <div id="count" class="stat-number">
-          0枚登録
-        </div>
-
-        <div id="pt" class="stat-detail">
-          所持 0 / 0
-        </div>
-      </div>
-
-      <div id="percent" class="stat-percent">
-        0.0%
-      </div>
+  <div class="stats">
+    <div class="stat">
+      <div class="stat-label">登録カード</div>
+      <div class="stat-value" id="totalCards">0</div>
     </div>
 
-    <div id="totalOwned" class="stat-detail">
-      総所持枚数：0枚
+    <div class="stat">
+      <div class="stat-label">所持カード</div>
+      <div class="stat-value" id="ownedCards">0</div>
     </div>
 
-    <div class="bar">
-      <i id="pg"></i>
+    <div class="stat">
+      <div class="stat-label">所持枚数</div>
+      <div class="stat-value" id="ownedQuantity">0</div>
     </div>
 
-  </section>
-
-
-  <!-- 検索 -->
-
-  <input
-    id="q"
-    placeholder="カード名・番号・商品名で検索"
-    autocomplete="off"
-  >
-
-
-  <!-- 商品・レアリティ -->
+    <div class="stat">
+      <div class="stat-label">収集率</div>
+      <div class="stat-value" id="collectionRate">0%</div>
+    </div>
+  </div>
 
   <div class="filters">
 
-    <select id="product">
+    <input
+      id="search"
+      class="search"
+      type="search"
+      placeholder="カード番号・カード名・商品名で検索"
+    >
+
+    <select id="productFilter">
       <option value="">商品すべて</option>
     </select>
 
-    <select id="rarity">
+    <select id="rarityFilter">
       <option value="">レアリティすべて</option>
     </select>
 
-  </div>
+    <div class="button-row">
 
+      <button
+        class="filter-button active"
+        data-work=""
+      >
+        全作品
+      </button>
 
-  <!-- 作品・カード種別 -->
+      <button
+        class="filter-button"
+        data-work="μ's"
+      >
+        μ's
+      </button>
 
-  <div class="extra-filters">
+      <button
+        class="filter-button"
+        data-work="Aqours"
+      >
+        Aqours
+      </button>
 
-    <button
-      class="filter-button active"
-      data-work=""
-    >
-      全作品
-    </button>
+      <button
+        class="filter-button"
+        data-work="虹ヶ咲"
+      >
+        虹ヶ咲
+      </button>
 
-    <button
-      class="filter-button"
-      data-work="μ's"
-    >
-      μ's
-    </button>
+      <button
+        class="filter-button"
+        data-work="Liella!"
+      >
+        Liella!
+      </button>
 
-    <button
-      class="filter-button"
-      data-work="Aqours"
-    >
-      Aqours
-    </button>
+      <button
+        class="filter-button"
+        data-work="蓮ノ空"
+      >
+        蓮ノ空
+      </button>
 
-    <button
-      class="filter-button"
-      data-work="虹ヶ咲"
-    >
-      虹ヶ咲
-    </button>
+    </div>
 
-    <button
-      class="filter-button"
-      data-work="Liella!"
-    >
-      Liella!
-    </button>
+    <div class="button-row" style="margin-top:10px;">
 
-    <button
-      class="filter-button"
-      data-work="蓮ノ空"
-    >
-      蓮ノ空
-    </button>
+      <button
+        class="filter-button active"
+        data-kind=""
+      >
+        全カード
+      </button>
 
-  </div>
+      <button
+        class="filter-button"
+        data-kind="member"
+      >
+        メンバーカード
+      </button>
 
+      <button
+        class="filter-button"
+        data-kind="live"
+      >
+        ライブカード
+      </button>
 
-  <div class="extra-filters">
+    </div>
 
-    <button
-      class="filter-button active"
-      data-kind=""
-    >
-      全カード
-    </button>
+    <div class="button-row" style="margin-top:10px;">
 
-    <button
-      class="filter-button"
-      data-kind="member"
-    >
-      メンバーカード
-    </button>
+      <button
+        class="filter-button active"
+        data-ownership="all"
+      >
+        すべて
+      </button>
 
-    <button
-      class="filter-button"
-      data-kind="live"
-    >
-      ライブカード
-    </button>
+      <button
+        class="filter-button"
+        data-ownership="owned"
+      >
+        所持済み
+      </button>
 
-  </div>
+      <button
+        class="filter-button"
+        data-ownership="missing"
+      >
+        未所持
+      </button>
 
-
-  <!-- 所持状態 -->
-
-  <div class="extra-filters">
-
-    <button
-      class="filter-button active"
-      data-owned=""
-    >
-      すべて
-    </button>
-
-    <button
-      class="filter-button"
-      data-owned="owned"
-    >
-      所持済み
-    </button>
-
-    <button
-      class="filter-button"
-      data-owned="missing"
-    >
-      未所持
-    </button>
+    </div>
 
   </div>
 
-
-  <div id="resultInfo" class="result-info">
-    0件
+  <div class="result-info" id="resultInfo">
+    読み込み中...
   </div>
 
-
-  <!-- カード一覧 -->
-
-  <div id="list"></div>
+  <div id="cards" class="cards"></div>
 
   <button
-    id="more"
-    class="more"
-    style="display:none"
+    id="moreButton"
+    class="more-button"
+    style="display:none;"
   >
     もっと読み込む
   </button>
 
-</main>
+</div>
 
 
-<button
-  id="topButton"
-  class="top-button"
-  onclick="window.scrollTo({top:0,behavior:'smooth'})"
+<!-- =========================
+     画像拡大ウィンドウ
+     ========================= -->
+
+<div
+  id="imageModal"
+  class="image-modal"
 >
-  ↑
-</button>
+
+  <div
+    id="imageModalBackdrop"
+    class="image-modal-backdrop"
+  ></div>
+
+  <div class="image-modal-content">
+
+    <button
+      id="imageModalClose"
+      class="image-modal-close"
+      type="button"
+      aria-label="閉じる"
+    >
+      ×
+    </button>
+
+    <img
+      id="imageModalImage"
+      src=""
+      alt=""
+    >
+
+  </div>
+
+</div>
 
 
 <script>
 
-const K = "loveca_inventory_v4";
+const DATA_URL =
+  "data/cards.json?timestamp=" + Date.now();
+
+const STORAGE_KEY =
+  "loveca_inventory_v4";
+
 
 let cards = [];
 
-let inv = {};
+let inventory = {};
 
-try{
-  inv = JSON.parse(
-    localStorage.getItem(K) || "{}"
-  );
-}catch(e){
-  inv = {};
+let currentWork = "";
+
+let currentKind = "";
+
+let currentOwnership = "all";
+
+let displayCount = 100;
+
+
+/* =========================
+   データ読み込み
+   ========================= */
+
+async function loadCards() {
+
+  try {
+
+    const response =
+      await fetch(DATA_URL);
+
+    if (!response.ok) {
+      throw new Error(
+        "カードデータ取得失敗"
+      );
+    }
+
+    cards =
+      await response.json();
+
+    loadInventory();
+
+    document.getElementById(
+      "syncInfo"
+    ).textContent =
+      "カードデータ同期済み：" +
+      cards.length.toLocaleString() +
+      "件";
+
+    setupFilters();
+
+    render();
+
+  } catch (error) {
+
+    console.error(error);
+
+    document.getElementById(
+      "syncInfo"
+    ).textContent =
+      "カードデータを読み込めませんでした";
+
+  }
+
 }
 
-let workFilter = "";
-let kindFilter = "";
-let ownedFilter = "";
 
-let displayLimit = 100;
+/* =========================
+   所持データ
+   ========================= */
 
-const $ = x =>
-  document.getElementById(x);
+function loadInventory() {
 
+  try {
 
-/* --------------------------------
-   HTMLエスケープ
--------------------------------- */
+    inventory =
+      JSON.parse(
+        localStorage.getItem(
+          STORAGE_KEY
+        ) || "{}"
+      );
 
-function esc(s){
+  } catch {
 
-  return String(s || "")
-    .replace(/[&<>"]/g, c => ({
-      "&":"&amp;",
-      "<":"&lt;",
-      ">":"&gt;",
-      '"':"&quot;"
-    }[c]));
+    inventory = {};
+
+  }
 
 }
 
 
-/* --------------------------------
-   在庫保存
--------------------------------- */
-
-function save(){
+function saveInventory() {
 
   localStorage.setItem(
-    K,
-    JSON.stringify(inv)
+    STORAGE_KEY,
+    JSON.stringify(inventory)
   );
-
-  render();
 
 }
 
 
-/* --------------------------------
-   在庫変更
--------------------------------- */
+/* =========================
+   フィルター
+   ========================= */
 
-function chg(id,n){
+function setupFilters() {
 
-  inv[id] =
-    Math.max(
-      0,
-      (inv[id] || 0) + n
+  const products =
+    [...new Set(
+      cards
+        .map(c => c.product)
+        .filter(Boolean)
+    )]
+    .sort(
+      (a, b) =>
+        a.localeCompare(
+          b,
+          "ja"
+        )
     );
 
-  save();
+  const productSelect =
+    document.getElementById(
+      "productFilter"
+    );
 
-}
+  for (
+    const product of products
+  ) {
+
+    const option =
+      document.createElement(
+        "option"
+      );
+
+    option.value =
+      product;
+
+    option.textContent =
+      product;
+
+    productSelect.appendChild(
+      option
+    );
+
+  }
 
 
-/* --------------------------------
-   カード画像エラー
--------------------------------- */
+  const rarities =
+    [...new Set(
+      cards
+        .map(c => c.rarity)
+        .filter(Boolean)
+    )]
+    .sort();
 
-function imageError(img){
+  const raritySelect =
+    document.getElementById(
+      "rarityFilter"
+    );
 
-  img.style.display = "none";
+  for (
+    const rarity of rarities
+  ) {
 
-  const box =
-    document.createElement("div");
+    const option =
+      document.createElement(
+        "option"
+      );
 
-  box.className =
-    "card-image no-image";
+    option.value =
+      rarity;
 
-  box.textContent =
-    "画像なし";
+    option.textContent =
+      rarity;
 
-  img.parentNode.insertBefore(
-    box,
-    img
+    raritySelect.appendChild(
+      option
+    );
+
+  }
+
+
+  document
+    .getElementById("search")
+    .addEventListener(
+      "input",
+      () => {
+        displayCount = 100;
+        render();
+      }
+    );
+
+
+  productSelect.addEventListener(
+    "change",
+    () => {
+      displayCount = 100;
+      render();
+    }
   );
 
-}
+
+  raritySelect.addEventListener(
+    "change",
+    () => {
+      displayCount = 100;
+      render();
+    }
+  );
 
 
-/* --------------------------------
-   カード一覧表示
--------------------------------- */
+  document
+    .querySelectorAll(
+      "[data-work]"
+    )
+    .forEach(button => {
 
-function render(){
+      button.addEventListener(
+        "click",
+        () => {
 
-  const q =
-    $("q").value
-      .trim()
-      .toLowerCase();
+          currentWork =
+            button.dataset.work;
 
-  const p =
-    $("product").value;
+          document
+            .querySelectorAll(
+              "[data-work]"
+            )
+            .forEach(
+              b =>
+                b.classList.remove(
+                  "active"
+                )
+            );
 
-  const r =
-    $("rarity").value;
+          button.classList.add(
+            "active"
+          );
 
+          displayCount = 100;
 
-  let result =
-    cards.filter(c => {
+          render();
 
-      const searchText = [
-        c.id,
-        c.name,
-        c.product,
-        c.school,
-        c.unit,
-        c.work
-      ]
-      .join(" ")
-      .toLowerCase();
-
-
-      if(
-        q &&
-        !searchText.includes(q)
-      ){
-        return false;
-      }
-
-
-      if(
-        p &&
-        c.product !== p
-      ){
-        return false;
-      }
-
-
-      if(
-        r &&
-        c.rarity !== r
-      ){
-        return false;
-      }
-
-
-      if(
-        workFilter &&
-        c.work !== workFilter
-      ){
-        return false;
-      }
-
-
-      if(
-        kindFilter &&
-        c.kind !== kindFilter
-      ){
-        return false;
-      }
-
-
-      const quantity =
-        inv[c.id] || 0;
-
-
-      if(
-        ownedFilter === "owned" &&
-        quantity <= 0
-      ){
-        return false;
-      }
-
-
-      if(
-        ownedFilter === "missing" &&
-        quantity > 0
-      ){
-        return false;
-      }
-
-
-      return true;
+        }
+      );
 
     });
 
 
-  /* --------------------------------
-     統計
-  -------------------------------- */
+  document
+    .querySelectorAll(
+      "[data-kind]"
+    )
+    .forEach(button => {
 
-  const ownedCards =
-    cards.reduce(
-      (n,c) =>
-        n + (
-          (inv[c.id] || 0) > 0
-            ? 1
-            : 0
-        ),
-      0
+      button.addEventListener(
+        "click",
+        () => {
+
+          currentKind =
+            button.dataset.kind;
+
+          document
+            .querySelectorAll(
+              "[data-kind]"
+            )
+            .forEach(
+              b =>
+                b.classList.remove(
+                  "active"
+                )
+            );
+
+          button.classList.add(
+            "active"
+          );
+
+          displayCount = 100;
+
+          render();
+
+        }
+      );
+
+    });
+
+
+  document
+    .querySelectorAll(
+      "[data-ownership]"
+    )
+    .forEach(button => {
+
+      button.addEventListener(
+        "click",
+        () => {
+
+          currentOwnership =
+            button.dataset.ownership;
+
+          document
+            .querySelectorAll(
+              "[data-ownership]"
+            )
+            .forEach(
+              b =>
+                b.classList.remove(
+                  "active"
+                )
+            );
+
+          button.classList.add(
+            "active"
+          );
+
+          displayCount = 100;
+
+          render();
+
+        }
+      );
+
+    });
+
+
+  document
+    .getElementById("moreButton")
+    .addEventListener(
+      "click",
+      () => {
+
+        displayCount += 100;
+
+        render();
+
+      }
     );
 
-
-  const totalOwned =
-    cards.reduce(
-      (n,c) =>
-        n + (inv[c.id] || 0),
-      0
-    );
+}
 
 
-  const total =
-    cards.length;
+/* =========================
+   カード絞り込み
+   ========================= */
+
+function getFilteredCards() {
+
+  const search =
+    document
+      .getElementById("search")
+      .value
+      .trim()
+      .toLowerCase();
+
+  const product =
+    document
+      .getElementById(
+        "productFilter"
+      )
+      .value;
+
+  const rarity =
+    document
+      .getElementById(
+        "rarityFilter"
+      )
+      .value;
 
 
-  const percent =
-    total
-      ? ownedCards / total * 100
-      : 0;
+  return cards.filter(card => {
+
+    if (
+      currentWork &&
+      card.work !== currentWork
+    ) {
+      return false;
+    }
 
 
-  $("count").textContent =
-    total.toLocaleString() +
-    "枚登録";
+    if (
+      currentKind &&
+      card.kind !== currentKind
+    ) {
+      return false;
+    }
 
 
-  $("pt").textContent =
-    `所持 ${ownedCards.toLocaleString()} / ${total.toLocaleString()} 枚`;
+    if (
+      product &&
+      card.product !== product
+    ) {
+      return false;
+    }
 
 
-  $("percent").textContent =
-    percent.toFixed(1) + "%";
+    if (
+      rarity &&
+      card.rarity !== rarity
+    ) {
+      return false;
+    }
 
 
-  $("totalOwned").textContent =
-    `総所持枚数：${totalOwned.toLocaleString()}枚`;
+    const count =
+      Number(
+        inventory[card.id] || 0
+      );
 
 
-  $("pg").style.width =
-    Math.min(100,percent) + "%";
+    if (
+      currentOwnership ===
+      "owned" &&
+      count <= 0
+    ) {
+      return false;
+    }
 
 
-  $("resultInfo").textContent =
-    `${result.length.toLocaleString()}件中 ` +
-    `${Math.min(displayLimit,result.length).toLocaleString()}件を表示`;
+    if (
+      currentOwnership ===
+      "missing" &&
+      count > 0
+    ) {
+      return false;
+    }
 
 
-  /* --------------------------------
-     カード一覧
-  -------------------------------- */
+    if (search) {
 
-  const visible =
-    result.slice(
+      const target = [
+
+        card.id,
+
+        card.name,
+
+        card.product,
+
+        card.work,
+
+        card.unit,
+
+        card.school,
+
+        card.rarity
+
+      ]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase();
+
+
+      if (
+        !target.includes(search)
+      ) {
+        return false;
+      }
+
+    }
+
+
+    return true;
+
+  });
+
+}
+
+
+/* =========================
+   カード表示
+   ========================= */
+
+function render() {
+
+  const filtered =
+    getFilteredCards();
+
+
+  const display =
+    filtered.slice(
       0,
-      displayLimit
+      displayCount
     );
 
 
-  $("list").innerHTML =
-    visible.map(c => {
+  const container =
+    document.getElementById(
+      "cards"
+    );
 
-      const quantity =
-        inv[c.id] || 0;
-
-
-      const ownedClass =
-        quantity > 0
-          ? " owned"
-          : "";
+  container.innerHTML = "";
 
 
-      return `
+  for (
+    const card of display
+  ) {
 
-        <div class="card${ownedClass}">
+    const element =
+      document.createElement(
+        "div"
+      );
+
+    element.className =
+      "card";
+
+
+    const count =
+      Number(
+        inventory[card.id] || 0
+      );
+
+
+    let imageHTML;
+
+
+    if (card.image) {
+
+      imageHTML = `
+        <img
+          class="card-image"
+          src="${escapeHTML(card.image)}"
+          alt="${escapeHTML(card.name || "")}"
+          loading="lazy"
+          data-image="${escapeHTML(card.image)}"
+        >
+      `;
+
+    } else {
+
+      imageHTML = `
+        <div class="no-image">
+          画像なし
+        </div>
+      `;
+
+    }
+
+
+    let kindText =
+      "";
+
+    if (
+      card.kind ===
+      "member"
+    ) {
+
+      kindText =
+        "メンバー";
+
+    } else if (
+      card.kind ===
+      "live"
+    ) {
+
+      kindText =
+        "ライブ";
+
+    } else {
+
+      kindText =
+        card.kind || "";
+
+    }
+
+
+    element.innerHTML = `
+
+      <div class="card-image-wrap">
+        ${imageHTML}
+      </div>
+
+      <div class="card-info">
+
+        <div class="card-name">
+          ${escapeHTML(
+            card.name || "名称不明"
+          )}
+        </div>
+
+        <div class="card-meta">
 
           ${
-            c.image
-              ? `
-                <img
-                  class="card-image"
-                  src="${esc(c.image)}"
-                  loading="lazy"
-                  onerror="imageError(this)"
-                >
-              `
-              : `
-                <div class="card-image no-image">
-                  画像なし
-                </div>
-              `
+            card.work
+              ? `<span class="badge">
+                   ${escapeHTML(card.work)}
+                 </span>`
+              : ""
           }
 
+          ${
+            kindText
+              ? `<span class="badge">
+                   ${escapeHTML(kindText)}
+                 </span>`
+              : ""
+          }
 
-          <div class="card-info">
+          ${
+            card.rarity
+              ? `<span class="badge">
+                   ${escapeHTML(card.rarity)}
+                 </span>`
+              : ""
+          }
 
-            <div class="card-name">
-              ${esc(c.name || "カード名不明")}
-            </div>
+          <br>
 
-            <div class="meta">
+          ${escapeHTML(
+            card.id || ""
+          )}
 
-              <span class="work">
-                ${esc(c.work || "その他")}
-              </span>
+          <br>
 
-              ${
-                c.kind === "member"
-                  ? "メンバー"
-                  : c.kind === "live"
-                    ? "ライブ"
-                    : ""
-              }
-
-              <br>
-
-              ${esc(c.id)}
-
-              <br>
-
-              ${esc(c.product || "商品情報なし")}
-
-              ${
-                c.rarity
-                  ? `<br>${esc(c.rarity)}`
-                  : ""
-              }
-
-            </div>
-
-          </div>
-
-
-          <div class="qty">
-
-            <button
-              onclick="chg('${esc(c.id)}',-1)"
-              aria-label="減らす"
-            >
-              −
-            </button>
-
-            <span class="qty-number">
-              ${quantity}
-            </span>
-
-            <button
-              onclick="chg('${esc(c.id)}',1)"
-              aria-label="増やす"
-            >
-              ＋
-            </button>
-
-          </div>
+          ${
+            card.product
+              ? escapeHTML(
+                  card.product
+                )
+              : "商品情報なし"
+          }
 
         </div>
 
-      `;
+      </div>
 
-    }).join("");
+      <div class="inventory">
+
+        <button
+          type="button"
+          class="minus-button"
+          data-id="${escapeHTML(card.id)}"
+        >
+          −
+        </button>
+
+        <div class="inventory-count">
+          ${count}
+        </div>
+
+        <button
+          type="button"
+          class="plus-button"
+          data-id="${escapeHTML(card.id)}"
+        >
+          ＋
+        </button>
+
+      </div>
+
+    `;
 
 
-  /* --------------------------------
-     もっと読む
-  -------------------------------- */
+    container.appendChild(
+      element
+    );
 
-  if(
-    displayLimit <
-    result.length
-  ){
+  }
 
-    $("more").style.display =
+
+  container
+    .querySelectorAll(
+      ".minus-button"
+    )
+    .forEach(button => {
+
+      button.addEventListener(
+        "click",
+        () => {
+
+          const id =
+            button.dataset.id;
+
+          const current =
+            Number(
+              inventory[id] || 0
+            );
+
+          if (
+            current > 0
+          ) {
+
+            inventory[id] =
+              current - 1;
+
+          }
+
+          saveInventory();
+
+          render();
+
+        }
+      );
+
+    });
+
+
+  container
+    .querySelectorAll(
+      ".plus-button"
+    )
+    .forEach(button => {
+
+      button.addEventListener(
+        "click",
+        () => {
+
+          const id =
+            button.dataset.id;
+
+          const current =
+            Number(
+              inventory[id] || 0
+            );
+
+          inventory[id] =
+            current + 1;
+
+          saveInventory();
+
+          render();
+
+        }
+      );
+
+    });
+
+
+  updateStats();
+
+
+  document.getElementById(
+    "resultInfo"
+  ).textContent =
+    filtered.length.toLocaleString() +
+    "件中 " +
+    Math.min(
+      displayCount,
+      filtered.length
+    ).toLocaleString() +
+    "件を表示";
+
+
+  const moreButton =
+    document.getElementById(
+      "moreButton"
+    );
+
+
+  if (
+    displayCount <
+    filtered.length
+  ) {
+
+    moreButton.style.display =
       "block";
 
-  }else{
+    moreButton.textContent =
+      "もっと読み込む";
 
-    $("more").style.display =
+  } else {
+
+    moreButton.style.display =
       "none";
 
   }
@@ -901,300 +1326,245 @@ function render(){
 }
 
 
-/* --------------------------------
-   もっと読み込む
--------------------------------- */
+/* =========================
+   統計
+   ========================= */
 
-$("more").onclick = function(){
+function updateStats() {
 
-  displayLimit += 100;
-
-  render();
-
-};
+  const total =
+    cards.length;
 
 
-/* --------------------------------
-   商品・レアリティ
--------------------------------- */
+  let ownedCards =
+    0;
 
-$("product").onchange =
-  function(){
-
-    displayLimit = 100;
-
-    render();
-
-  };
+  let ownedQuantity =
+    0;
 
 
-$("rarity").onchange =
-  function(){
+  for (
+    const card of cards
+  ) {
 
-    displayLimit = 100;
-
-    render();
-
-  };
-
-
-/* --------------------------------
-   検索
--------------------------------- */
-
-$("q").oninput =
-  function(){
-
-    displayLimit = 100;
-
-    render();
-
-  };
+    const count =
+      Number(
+        inventory[card.id] || 0
+      );
 
 
-/* --------------------------------
-   作品フィルター
--------------------------------- */
+    if (
+      count > 0
+    ) {
 
-document
-  .querySelectorAll(
-    "[data-work]"
-  )
-  .forEach(button => {
+      ownedCards++;
 
-    button.onclick =
-      function(){
+      ownedQuantity +=
+        count;
 
-        workFilter =
-          this.dataset.work;
+    }
 
-        document
-          .querySelectorAll(
-            "[data-work]"
-          )
-          .forEach(x =>
-            x.classList.remove(
-              "active"
-            )
-          );
-
-        this.classList.add(
-          "active"
-        );
-
-        displayLimit = 100;
-
-        render();
-
-      };
-
-  });
+  }
 
 
-/* --------------------------------
-   カード種別
--------------------------------- */
-
-document
-  .querySelectorAll(
-    "[data-kind]"
-  )
-  .forEach(button => {
-
-    button.onclick =
-      function(){
-
-        kindFilter =
-          this.dataset.kind;
-
-        document
-          .querySelectorAll(
-            "[data-kind]"
-          )
-          .forEach(x =>
-            x.classList.remove(
-              "active"
-            )
-          );
-
-        this.classList.add(
-          "active"
-        );
-
-        displayLimit = 100;
-
-        render();
-
-      };
-
-  });
+  const rate =
+    total > 0
+      ? (
+          ownedCards /
+          total *
+          100
+        ).toFixed(1)
+      : "0.0";
 
 
-/* --------------------------------
-   所持状態
--------------------------------- */
-
-document
-  .querySelectorAll(
-    "[data-owned]"
-  )
-  .forEach(button => {
-
-    button.onclick =
-      function(){
-
-        ownedFilter =
-          this.dataset.owned;
-
-        document
-          .querySelectorAll(
-            "[data-owned]"
-          )
-          .forEach(x =>
-            x.classList.remove(
-              "active"
-            )
-          );
-
-        this.classList.add(
-          "active"
-        );
-
-        displayLimit = 100;
-
-        render();
-
-      };
-
-  });
+  document.getElementById(
+    "totalCards"
+  ).textContent =
+    total.toLocaleString();
 
 
-/* --------------------------------
-   スクロール時の↑ボタン
--------------------------------- */
+  document.getElementById(
+    "ownedCards"
+  ).textContent =
+    ownedCards.toLocaleString();
 
-window.addEventListener(
-  "scroll",
-  function(){
 
-    $("topButton").style.display =
-      window.scrollY > 400
-        ? "block"
-        : "none";
+  document.getElementById(
+    "ownedQuantity"
+  ).textContent =
+    ownedQuantity.toLocaleString();
+
+
+  document.getElementById(
+    "collectionRate"
+  ).textContent =
+    rate + "%";
+
+}
+
+
+/* =========================
+   HTMLエスケープ
+   ========================= */
+
+function escapeHTML(value) {
+
+  return String(value)
+    .replace(
+      /&/g,
+      "&amp;"
+    )
+    .replace(
+      /</g,
+      "&lt;"
+    )
+    .replace(
+      />/g,
+      "&gt;"
+    )
+    .replace(
+      /"/g,
+      "&quot;"
+    )
+    .replace(
+      /'/g,
+      "&#039;"
+    );
+
+}
+
+
+/* =========================
+   画像拡大
+   ========================= */
+
+const imageModal =
+  document.getElementById(
+    "imageModal"
+  );
+
+const imageModalImage =
+  document.getElementById(
+    "imageModalImage"
+  );
+
+const imageModalClose =
+  document.getElementById(
+    "imageModalClose"
+  );
+
+const imageModalBackdrop =
+  document.getElementById(
+    "imageModalBackdrop"
+  );
+
+
+function openImageModal(
+  src,
+  alt
+) {
+
+  imageModalImage.src =
+    src;
+
+  imageModalImage.alt =
+    alt || "";
+
+  imageModal.classList.add(
+    "active"
+  );
+
+  document.body.style.overflow =
+    "hidden";
+
+}
+
+
+function closeImageModal() {
+
+  imageModal.classList.remove(
+    "active"
+  );
+
+  imageModalImage.src =
+    "";
+
+  document.body.style.overflow =
+    "";
+
+}
+
+
+/*
+ * カード画像をタップ
+ */
+document.addEventListener(
+  "click",
+  event => {
+
+    const image =
+      event.target.closest(
+        ".card-image"
+      );
+
+    if (!image) {
+      return;
+    }
+
+
+    openImageModal(
+      image.dataset.image ||
+      image.src,
+      image.alt
+    );
 
   }
 );
 
 
-/* --------------------------------
-   データ読み込み
--------------------------------- */
-
-async function load(){
-
-  try{
-
-    const r =
-      await fetch(
-        "data/cards.json?" +
-        Date.now()
-      );
+/*
+ * ×ボタン
+ */
+imageModalClose.addEventListener(
+  "click",
+  closeImageModal
+);
 
 
-    if(!r.ok){
-
-      throw new Error(
-        "HTTP " + r.status
-      );
-
-    }
-
-
-    cards =
-      await r.json();
+/*
+ * 背景をタップ
+ */
+imageModalBackdrop.addEventListener(
+  "click",
+  closeImageModal
+);
 
 
-    if(!Array.isArray(cards)){
+/*
+ * Escキー
+ */
+document.addEventListener(
+  "keydown",
+  event => {
 
-      throw new Error(
-        "cards.jsonが配列ではありません"
-      );
+    if (
+      event.key ===
+      "Escape"
+    ) {
+
+      closeImageModal();
 
     }
-
-
-    /* 商品 */
-
-    const products =
-      [
-        ...new Set(
-          cards
-            .map(c => c.product)
-            .filter(Boolean)
-        )
-      ].sort();
-
-
-    products.forEach(x => {
-
-      $("product")
-        .insertAdjacentHTML(
-          "beforeend",
-          `<option value="${esc(x)}">${esc(x)}</option>`
-        );
-
-    });
-
-
-    /* レアリティ */
-
-    const rarities =
-      [
-        ...new Set(
-          cards
-            .map(c => c.rarity)
-            .filter(Boolean)
-        )
-      ].sort();
-
-
-    rarities.forEach(x => {
-
-      $("rarity")
-        .insertAdjacentHTML(
-          "beforeend",
-          `<option value="${esc(x)}">${esc(x)}</option>`
-        );
-
-    });
-
-
-    $("status").textContent =
-      "カードデータ同期済み：" +
-      cards.length.toLocaleString() +
-      "件";
-
-
-    render();
-
-
-  }catch(e){
-
-    console.error(e);
-
-    $("status").textContent =
-      "カードデータを読み込めませんでした。GitHub Actionsとdata/cards.jsonを確認してください。";
 
   }
+);
 
-}
 
+/* =========================
+   開始
+   ========================= */
 
-/* --------------------------------
-   起動
--------------------------------- */
-
-load();
+loadCards();
 
 </script>
 
