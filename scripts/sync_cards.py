@@ -1,5 +1,6 @@
 import json
 import re
+import shutil
 import time
 from pathlib import Path
 from urllib.parse import quote
@@ -12,9 +13,18 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 DATA_DIR = BASE_DIR / "data"
 DATA_FILE = DATA_DIR / "cards.json"
 
+# バックアップ先
+BACKUP_DIR = DATA_DIR / "backup"
+
 WIKI_BASE = "https://wikiwiki.jp/llocardgame/"
 LLOCG_API = "https://api.github.com/repos/wlt233/llocg_db/git/trees/master"
+LLOCG_COMMITS_API = (
+    "https://api.github.com/repos/wlt233/llocg_db/commits"
+)
 LLOCG_RAW = "https://raw.githubusercontent.com/wlt233/llocg_db/master/"
+LLOCG_RAW_COMMIT = (
+    "https://raw.githubusercontent.com/wlt233/llocg_db/{}/json/cards.json"
+)
 
 WIKI_PAGE_DELAY = 6
 
@@ -33,7 +43,6 @@ WIKI_PAGES = [
     ("Liella!", "member", "data/メンバーカード/Liella!"),
     ("蓮ノ空", "member", "data/メンバーカード/蓮ノ空"),
     ("その他", "member", "data/メンバーカード/その他"),
-
     ("μ's", "live", "data/ライブカード/μ's"),
     ("Aqours", "live", "data/ライブカード/Aqours"),
     ("虹ヶ咲", "live", "data/ライブカード/虹ヶ咲"),
@@ -78,7 +87,11 @@ def request_with_retry(
 
             if response.status_code == 429:
                 wait = delay * (attempt + 1)
-                print("429: {}秒待機".format(wait))
+                print(
+                    "429: {}秒待機".format(
+                        wait
+                    )
+                )
                 time.sleep(wait)
                 continue
 
@@ -91,7 +104,9 @@ def request_with_retry(
 
         except requests.RequestException as e:
             print(
-                "通信エラー: {}".format(e)
+                "通信エラー: {}".format(
+                    e
+                )
             )
 
         time.sleep(delay)
@@ -100,6 +115,12 @@ def request_with_retry(
 
 
 def load_existing():
+    """
+    現在のcards.jsonを読み込む。
+
+    ここで読み込んだカードは、
+    Wiki側から消えていても絶対に削除しない。
+    """
     if not DATA_FILE.exists():
         return {}
 
@@ -112,11 +133,20 @@ def load_existing():
             data = json.load(f)
 
         if isinstance(data, list):
-            return {
-                str(card.get("id")): card
-                for card in data
-                if card.get("id")
-            }
+            result = {}
+
+            for card in data:
+                if not isinstance(card, dict):
+                    continue
+
+                card_id = card.get("id")
+
+                if not card_id:
+                    continue
+
+                result[str(card_id)] = card
+
+            return result
 
         if isinstance(data, dict):
             return data
@@ -129,6 +159,49 @@ def load_existing():
         )
 
     return {}
+
+
+def backup_existing():
+    """
+    現在のcards.jsonをバックアップ。
+    """
+    if not DATA_FILE.exists():
+        return
+
+    try:
+        BACKUP_DIR.mkdir(
+            parents=True,
+            exist_ok=True,
+        )
+
+        timestamp = time.strftime(
+            "%Y%m%d_%H%M%S"
+        )
+
+        backup_file = (
+            BACKUP_DIR
+            / "cards_{}.json".format(
+                timestamp
+            )
+        )
+
+        shutil.copy2(
+            DATA_FILE,
+            backup_file,
+        )
+
+        print(
+            "バックアップ作成: {}".format(
+                backup_file
+            )
+        )
+
+    except Exception as e:
+        print(
+            "バックアップ作成失敗: {}".format(
+                e
+            )
+        )
 
 
 def parse_wiki_page(
@@ -208,7 +281,9 @@ def fetch_wiki_cards(session):
         )
 
         if not response:
-            print("  -> 取得失敗")
+            print(
+                "  -> 取得失敗"
+            )
             continue
 
         cards = parse_wiki_page(
@@ -240,13 +315,13 @@ def normalize_base_id(card_id):
         return ""
 
     match = CARD_ID_RE.search(
-        card_id
+        str(card_id)
     )
 
     if match:
         return match.group(0)
 
-    return card_id.strip()
+    return str(card_id).strip()
 
 
 def get_rarity_from_filename(
@@ -265,6 +340,28 @@ def get_rarity_from_filename(
     return match.group(1).replace(
         "＋",
         "+",
+    )
+
+
+def rarity_priority(rarity):
+    priorities = {
+        "N": 10,
+        "P": 20,
+        "R": 30,
+        "L": 40,
+        "SD": 45,
+        "PE": 50,
+        "PR": 60,
+        "SR": 70,
+        "SEC": 80,
+        "SECE": 90,
+        "P2": 100,
+        "R2": 110,
+    }
+
+    return priorities.get(
+        str(rarity).upper(),
+        200,
     )
 
 
@@ -364,28 +461,6 @@ def build_image_index(tree):
     return index
 
 
-def rarity_priority(rarity):
-    priorities = {
-        "N": 10,
-        "P": 20,
-        "R": 30,
-        "L": 40,
-        "SD": 45,
-        "PE": 50,
-        "PR": 60,
-        "SR": 70,
-        "SEC": 80,
-        "SECE": 90,
-        "P2": 100,
-        "R2": 110,
-    }
-
-    return priorities.get(
-        rarity.upper(),
-        200,
-    )
-
-
 def choose_image(
     card_id,
     candidates,
@@ -455,9 +530,7 @@ def attach_images(
         if not selected:
             continue
 
-        path = selected[
-            "path"
-        ]
+        path = selected["path"]
 
         image_url = (
             LLOCG_RAW
@@ -467,6 +540,7 @@ def attach_images(
             )
         )
 
+        # 新しい画像が見つかった場合だけ更新
         card["image"] = image_url
 
         matched += 1
@@ -481,7 +555,9 @@ def attach_images(
             rarity_count += 1
 
     print("")
-    print("LLOCG_DB画像照合結果")
+    print(
+        "LLOCG_DB画像照合結果"
+    )
     print(
         "画像あり: {}".format(
             matched
@@ -496,39 +572,401 @@ def attach_images(
     return cards
 
 
+def get_historical_llocg_cards(
+    session,
+):
+    """
+    現在の llocg_db/json/cards.json が空の場合に、
+    GitHubの過去コミットから populated cards.json を探す。
+
+    見つからなければ空dictを返す。
+    """
+    print("")
+    print(
+        "========================================"
+    )
+    print("LLOCG_DB過去JSON確認")
+    print(
+        "========================================"
+    )
+
+    response = request_with_retry(
+        session,
+        LLOCG_COMMITS_API,
+        retries=3,
+        delay=3,
+        params={
+            "path": "json/cards.json",
+            "per_page": "20",
+        },
+    )
+
+    if not response:
+        print(
+            "過去コミット一覧の取得失敗"
+        )
+        return {}
+
+    try:
+        commits = response.json()
+
+    except Exception as e:
+        print(
+            "コミットJSON解析失敗: {}".format(
+                e
+            )
+        )
+        return {}
+
+    if not isinstance(
+        commits,
+        list,
+    ):
+        return {}
+
+    print(
+        "過去コミット候補: {}".format(
+            len(commits)
+        )
+    )
+
+    checked = 0
+
+    for commit in commits:
+
+        sha = (
+            commit
+            .get("sha")
+        )
+
+        if not sha:
+            continue
+
+        checked += 1
+
+        url = LLOCG_RAW_COMMIT.format(
+            sha
+        )
+
+        print(
+            "過去JSON確認 {}/{}: {}".format(
+                checked,
+                len(commits),
+                sha[:8],
+            )
+        )
+
+        old_response = request_with_retry(
+            session,
+            url,
+            retries=2,
+            delay=2,
+        )
+
+        if not old_response:
+            continue
+
+        try:
+            data = old_response.json()
+
+        except Exception:
+            continue
+
+        if not isinstance(
+            data,
+            dict,
+        ):
+            continue
+
+        if len(data) < 100:
+            continue
+
+        print(
+            "過去JSONから {}件を取得".format(
+                len(data)
+            )
+        )
+
+        return data
+
+    print(
+        "利用できる過去JSONは見つかりませんでした"
+    )
+
+    return {}
+
+
+def normalize_external_card_id(
+    value,
+):
+    if not value:
+        return ""
+
+    value = str(value).strip()
+
+    match = CARD_ID_RE.search(
+        value
+    )
+
+    if match:
+        return match.group(0)
+
+    return value
+
+
+def attach_historical_data(
+    cards,
+    historical,
+):
+    """
+    過去の llocg_db JSON から
+    画像・レアリティ・商品・名前を補完する。
+
+    既存の画像や情報は原則上書きしない。
+    """
+    if not historical:
+        return cards
+
+    image_added = 0
+    rarity_added = 0
+    product_added = 0
+    name_added = 0
+
+    # 正規化したキーで検索できるようにする
+    normalized = {}
+
+    for key, value in historical.items():
+
+        if not isinstance(
+            value,
+            dict,
+        ):
+            continue
+
+        card_no = value.get(
+            "card_no",
+            key,
+        )
+
+        normalized_id = normalize_external_card_id(
+            card_no
+        )
+
+        if normalized_id:
+            normalized[
+                normalized_id
+            ] = value
+
+    for card_id, card in cards.items():
+
+        if card.get("image"):
+            has_image = True
+        else:
+            has_image = False
+
+        source = normalized.get(
+            normalize_base_id(card_id)
+        )
+
+        if not source:
+            continue
+
+        # 画像
+        if not has_image:
+
+            image = source.get(
+                "img"
+            )
+
+            if image:
+                card["image"] = image
+                image_added += 1
+
+        # レアリティ
+        if not card.get(
+            "rarity"
+        ):
+
+            rarity = source.get(
+                "rare"
+            )
+
+            if rarity:
+                card["rarity"] = str(
+                    rarity
+                ).replace(
+                    "＋",
+                    "+",
+                )
+
+                rarity_added += 1
+
+        # 商品
+        if not card.get(
+            "product"
+        ):
+
+            product = source.get(
+                "product"
+            )
+
+            if product:
+                card["product"] = product
+                product_added += 1
+
+        # カード名
+        if not card.get(
+            "name"
+        ):
+
+            name = source.get(
+                "name"
+            )
+
+            if name:
+                card["name"] = name
+                name_added += 1
+
+    print("")
+    print(
+        "過去LLOCG_DB補完結果"
+    )
+    print(
+        "画像追加: {}".format(
+            image_added
+        )
+    )
+    print(
+        "レアリティ追加: {}".format(
+            rarity_added
+        )
+    )
+    print(
+        "商品追加: {}".format(
+            product_added
+        )
+    )
+    print(
+        "名前追加: {}".format(
+            name_added
+        )
+    )
+
+    return cards
+
+
 def merge_cards(
     wiki_cards,
     existing,
 ):
+    """
+    最重要部分。
+
+    existingを最初に全部コピーし、
+    Wiki側のデータを上書き・追加する。
+
+    つまり、
+    Wikiから消えたカードがあっても
+    existingから削除されない。
+    """
     merged = {}
 
+    # まず現在の1144件を全部残す
+    for card_id, card in existing.items():
+
+        if not isinstance(
+            card,
+            dict,
+        ):
+            continue
+
+        merged[
+            card_id
+        ] = dict(card)
+
+    # Wikiのカードを追加・更新
     for card_id, wiki in wiki_cards.items():
 
-        old = existing.get(
-            card_id,
-            {},
-        )
+        if card_id in merged:
 
-        card = dict(old)
-
-        card.update(wiki)
-
-        if old.get("image"):
-            card["image"] = old[
-                "image"
+            old = merged[
+                card_id
             ]
 
-        if old.get("rarity"):
-            card["rarity"] = old[
-                "rarity"
-            ]
+            # Wiki情報で基本情報を更新
+            old.update(wiki)
 
-        merged[card_id] = card
+            # 既存の画像は、
+            # 後の画像補完まで消さない
+            if existing.get(
+                card_id,
+                {}
+            ).get("image"):
+
+                old["image"] = existing[
+                    card_id
+                ]["image"]
+
+            if existing.get(
+                card_id,
+                {}
+            ).get("rarity"):
+
+                old["rarity"] = existing[
+                    card_id
+                ]["rarity"]
+
+        else:
+
+            merged[
+                card_id
+            ] = dict(wiki)
 
     return merged
 
 
-def save_cards(cards):
+def verify_no_cards_lost(
+    existing,
+    merged,
+):
+    """
+    既存カードが1枚でも消えていたら
+    保存を中止する。
+    """
+    missing = []
+
+    for card_id in existing:
+        if card_id not in merged:
+            missing.append(
+                card_id
+            )
+
+    if missing:
+
+        print("")
+        print(
+            "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
+        )
+        print(
+            "ERROR: 既存カードが消えるため保存中止"
+        )
+        print(
+            "消失予定: {}件".format(
+                len(missing)
+            )
+        )
+        print(
+            "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
+        )
+
+        return False
+
+    return True
+
+
+def save_cards(
+    cards,
+):
     DATA_DIR.mkdir(
         parents=True,
         exist_ok=True,
@@ -550,6 +988,7 @@ def save_cards(cards):
         "w",
         encoding="utf-8",
     ) as f:
+
         json.dump(
             data,
             f,
@@ -579,19 +1018,39 @@ def save_cards(cards):
 def main():
 
     print(
+        "========================================"
+    )
+    print(
         "ラブカカード同期開始"
     )
-    print("")
+    print(
+        "========================================"
+    )
 
     session = get_session()
 
+    # ----------------------------------------
+    # 1. 現在のデータを読み込む
+    # ----------------------------------------
+
     existing = load_existing()
 
+    print("")
     print(
         "既存データ件数: {}".format(
             len(existing)
         )
     )
+
+    # 1144件以上ある場合、
+    # その件数を最低保証する
+    existing_count = len(
+        existing
+    )
+
+    # ----------------------------------------
+    # 2. Wiki取得
+    # ----------------------------------------
 
     wiki_cards = fetch_wiki_cards(
         session
@@ -604,6 +1063,8 @@ def main():
         )
     )
 
+    # Wikiが完全に死んでいる場合も
+    # 既存データだけで続行する
     if len(wiki_cards) < 100:
 
         print("")
@@ -611,20 +1072,23 @@ def main():
             "⚠ Wiki取得件数が少なすぎます"
         )
         print(
-            "⚠ 既存データを維持します"
+            "⚠ 既存データを維持して続行します"
         )
 
-        if existing:
-            save_cards(
-                existing
-            )
+        merged = dict(
+            existing
+        )
 
-        return
+    else:
 
-    merged = merge_cards(
-        wiki_cards,
-        existing,
-    )
+        merged = merge_cards(
+            wiki_cards,
+            existing,
+        )
+
+    # ----------------------------------------
+    # 3. LLOCG_DB画像
+    # ----------------------------------------
 
     tree = get_llocg_image_tree(
         session
@@ -649,15 +1113,168 @@ def main():
 
     else:
 
+        print("")
         print(
-            "⚠ LLOCG_DB画像一覧を取得できませんでした"
+            "⚠ LLOCG_DB画像一覧取得失敗"
         )
         print(
-            "⚠ 既存画像がある場合は維持します"
+            "⚠ 既存画像はそのまま維持します"
         )
+
+    # ----------------------------------------
+    # 4. 過去のLLOCG_DB JSON
+    # ----------------------------------------
+
+    # 画像がまだないカードを
+    # 過去JSONの公式画像URLで補完
+    needs_historical = False
+
+    for card in merged.values():
+
+        if not card.get(
+            "image"
+        ):
+            needs_historical = True
+            break
+
+    historical = {}
+
+    if needs_historical:
+
+        historical = get_historical_llocg_cards(
+            session
+        )
+
+        if historical:
+
+            merged = attach_historical_data(
+                merged,
+                historical,
+            )
+
+    # ----------------------------------------
+    # 5. 最終安全確認
+    # ----------------------------------------
+
+    print("")
+    print(
+        "========================================"
+    )
+    print("最終安全確認")
+    print(
+        "========================================"
+    )
+
+    if not verify_no_cards_lost(
+        existing,
+        merged,
+    ):
+
+        print(
+            "安全確認失敗"
+        )
+        print(
+            "cards.jsonは変更しません"
+        )
+
+        return
+
+    final_count = len(
+        merged
+    )
+
+    print(
+        "開始時カード数: {}".format(
+            existing_count
+        )
+    )
+
+    print(
+        "最終カード数: {}".format(
+            final_count
+        )
+    )
+
+    if final_count < existing_count:
+
+        print("")
+        print(
+            "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
+        )
+        print(
+            "ERROR: カード数が減少しています"
+        )
+        print(
+            "{} -> {}".format(
+                existing_count,
+                final_count,
+            )
+        )
+        print(
+            "保存を中止します"
+        )
+        print(
+            "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
+        )
+
+        return
+
+    # ----------------------------------------
+    # 6. バックアップ
+    # ----------------------------------------
+
+    backup_existing()
+
+    # ----------------------------------------
+    # 7. 保存
+    # ----------------------------------------
 
     save_cards(
         merged
+    )
+
+    # ----------------------------------------
+    # 8. 最終結果
+    # ----------------------------------------
+
+    image_count = 0
+
+    for card in merged.values():
+        if card.get("image"):
+            image_count += 1
+
+    print("")
+    print(
+        "========================================"
+    )
+    print(
+        "同期完了"
+    )
+    print(
+        "========================================"
+    )
+    print(
+        "開始時: {}件".format(
+            existing_count
+        )
+    )
+    print(
+        "最終: {}件".format(
+            final_count
+        )
+    )
+    print(
+        "画像あり: {}件".format(
+            image_count
+        )
+    )
+    print(
+        "画像なし: {}件".format(
+            final_count - image_count
+        )
+    )
+    print(
+        "========================================"
     )
 
 
