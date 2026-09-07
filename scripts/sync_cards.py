@@ -12,13 +12,23 @@ WIKI_BASE = "https://wikiwiki.jp/llocardgame/"
 OFFICIAL_BASE = "https://llofficial-cardgame.com"
 OUTPUT = "data/cards.json"
 
+# Wikiへのアクセス間隔
+WIKI_PAGE_DELAY = 6
+
 HEADERS = {
     "User-Agent": (
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
         "AppleWebKit/537.36 (KHTML, like Gecko) "
-        "Chrome/139.0 Safari/537.36"
-    )
+        "Chrome/131.0.0.0 Safari/537.36"
+    ),
+    "Accept": (
+        "text/html,application/xhtml+xml,application/xml;"
+        "q=0.9,image/avif,image/webp,*/*;q=0.8"
+    ),
+    "Accept-Language": "ja,en-US;q=0.9,en;q=0.8",
+    "Referer": "https://wikiwiki.jp/llocardgame/",
 }
+
 
 WIKI_PAGES = [
     ("member", "μ's", "data/メンバーカード/μ's"),
@@ -36,15 +46,16 @@ WIKI_PAGES = [
     ("live", "その他", "data/ライブカード/その他"),
 ]
 
+
 session = requests.Session()
 session.headers.update(HEADERS)
 
 
-# ============================================================
+# ------------------------------------------------------------
 # HTTP
-# ============================================================
+# ------------------------------------------------------------
 
-def get(url, params=None, retry=3):
+def get(url, params=None, retry=4):
     for i in range(retry):
         try:
             response = session.get(
@@ -52,177 +63,66 @@ def get(url, params=None, retry=3):
                 params=params,
                 timeout=30,
             )
+
+            # Wikiのアクセス制限
+            if response.status_code == 429:
+                retry_after = response.headers.get("Retry-After")
+
+                if retry_after:
+                    try:
+                        wait = int(retry_after)
+                    except ValueError:
+                        wait = 15
+                else:
+                    wait = 15 * (i + 1)
+
+                print(
+                    f"429 Too Many Requests: "
+                    f"{wait}秒待って再試行 ({i + 1}/{retry})"
+                )
+
+                time.sleep(wait)
+                continue
+
             response.raise_for_status()
-            response.encoding = response.apparent_encoding or response.encoding
+
+            response.encoding = (
+                response.apparent_encoding
+                or response.encoding
+            )
+
             return response
 
         except Exception as e:
-            print(f"取得失敗 {i + 1}/{retry}: {url}")
-            print(f"  {e}")
+            print(
+                f"取得失敗: {url} "
+                f"({i + 1}/{retry}) {e}"
+            )
 
             if i < retry - 1:
-                time.sleep(2)
+                time.sleep(5 * (i + 1))
 
     return None
 
+
+# ------------------------------------------------------------
+# Utility
+# ------------------------------------------------------------
 
 def clean_text(text):
     return re.sub(r"\s+", " ", text).strip()
 
 
-# ============================================================
-# Wiki
-# ============================================================
-
+# Wikiのリンクは
+#   PL!-sd1-001 高坂穂乃果
+# のようにカード番号＋名前になっている。
+#
+# そのため「リンク全体がID」という判定ではなく、
+# リンク文字列の中からIDを探す。
 CARD_ID_RE = re.compile(
-    r"^(PL!|LL-).+-\d{2,3}(?:-[A-Za-z0-9＋+]+)?$"
+    r"((?:PL!|LL-)[A-Za-z0-9!_-]+-\d{2,3}"
+    r"(?:-[A-Za-z0-9＋+]+)?)"
 )
-
-
-def parse_wiki_page(kind, work, path):
-    url = urljoin(WIKI_BASE, path)
-
-    print(f"Wiki取得: {work} / {kind}")
-    print(f"  {url}")
-
-    response = get(url)
-
-    if response is None:
-        return []
-
-    soup = BeautifulSoup(response.text, "html.parser")
-
-    cards = []
-
-    for table in soup.find_all("table"):
-        for tr in table.find_all("tr"):
-            links = tr.find_all("a")
-
-            if not links:
-                continue
-
-            card_link = None
-
-            for link in links:
-                text = clean_text(
-                    link.get_text(" ", strip=True)
-                )
-
-                if CARD_ID_RE.match(text):
-                    card_link = link
-                    break
-
-            if card_link is None:
-                continue
-
-            card_text = clean_text(
-                card_link.get_text(" ", strip=True)
-            )
-
-            parts = card_text.split(" ", 1)
-
-            card_id = parts[0]
-
-            if not CARD_ID_RE.match(card_id):
-                continue
-
-            if len(parts) > 1:
-                name = parts[1].strip()
-            else:
-                name = ""
-
-            product = ""
-
-            for link in links:
-                text = clean_text(
-                    link.get_text(" ", strip=True)
-                )
-
-                if text == card_text:
-                    continue
-
-                if any(
-                    keyword in text
-                    for keyword in [
-                        "スタートデッキ",
-                        "ブースターパック",
-                        "プレミアムブースター",
-                        "プロモーション",
-                    ]
-                ):
-                    product = text
-
-            cards.append({
-                "id": card_id,
-                "name": name,
-                "kind": kind,
-                "work": work,
-                "product": product,
-            })
-
-    return cards
-
-
-def get_wiki_cards():
-    result = []
-
-    for kind, work, path in WIKI_PAGES:
-        cards = parse_wiki_page(
-            kind,
-            work,
-            path,
-        )
-
-        print(f"  → {len(cards)} 件")
-
-        result.extend(cards)
-
-    unique = {}
-
-    for card in result:
-        unique[card["id"]] = card
-
-    result = list(unique.values())
-
-    print()
-    print("=" * 40)
-    print(f"Wiki取得件数: {len(result)}")
-    print("=" * 40)
-
-    if len(result) < 100:
-        raise RuntimeError(
-            f"Wiki取得件数が少なすぎるため安全停止しました: "
-            f"{len(result)} 件"
-        )
-
-    return result
-
-
-# ============================================================
-# 公式サイト
-# ============================================================
-
-def official_search(card_id):
-    url = (
-        f"{OFFICIAL_BASE}"
-        "/cardlist/searchresults/"
-    )
-
-    params = {
-        "cardno": card_id,
-    }
-
-    print(f"  公式検索: {card_id}")
-
-    response = get(
-        url,
-        params=params,
-    )
-
-    if response is None:
-        return None
-
-    return response.text
 
 
 def normalize_card_id(card_id):
@@ -231,26 +131,232 @@ def normalize_card_id(card_id):
 
 def get_base_id(card_id):
     """
-    レアリティ部分を除いたカード番号を返す。
-
-    例:
-      PL!SP-bp7-001-R
-      ↓
-      PL!SP-bp7-001
+    PL!SP-bp2-001-P
+    ↓
+    PL!SP-bp2-001
     """
 
+    card_id = normalize_card_id(card_id)
+
     match = re.match(
-        r"^(.+-\d{2,3})(?:-[A-Za-z0-9＋+]+)?$",
+        r"^(.+-\d{2,3})(?:-[A-Za-z0-9+]+)?$",
         card_id,
     )
 
     if match:
-        return normalize_card_id(match.group(1))
+        return match.group(1)
 
-    return normalize_card_id(card_id)
+    return card_id
+
+
+# ------------------------------------------------------------
+# Wiki
+# ------------------------------------------------------------
+
+def parse_wiki_page(kind, work, path):
+    url = urljoin(WIKI_BASE, path)
+
+    response = get(url)
+
+    if response is None:
+        return []
+
+    soup = BeautifulSoup(
+        response.text,
+        "html.parser",
+    )
+
+    cards = []
+
+    for table in soup.find_all("table"):
+        for tr in table.find_all("tr"):
+
+            links = tr.find_all("a")
+
+            if not links:
+                continue
+
+            card_link = None
+            card_id = None
+            card_name = ""
+
+            for link in links:
+                text = clean_text(
+                    link.get_text(" ", strip=True)
+                )
+
+                # ここが以前のコードとの重要な違い。
+                # matchではなくsearchする。
+                match = CARD_ID_RE.search(text)
+
+                if not match:
+                    continue
+
+                card_id = normalize_card_id(
+                    match.group(1)
+                )
+
+                # IDの後ろがカード名
+                card_name = text[
+                    match.end():
+                ].strip()
+
+                card_link = link
+                break
+
+            if card_link is None or card_id is None:
+                continue
+
+            # 商品名
+            product = ""
+
+            for link in links:
+                text = clean_text(
+                    link.get_text(" ", strip=True)
+                )
+
+                if text == clean_text(
+                    card_link.get_text(" ", strip=True)
+                ):
+                    continue
+
+                keywords = [
+                    "スタートデッキ",
+                    "ブースターパック",
+                    "プレミアムブースター",
+                    "プロモーション",
+                    "PR",
+                ]
+
+                if any(
+                    keyword in text
+                    for keyword in keywords
+                ):
+                    product = text
+                    break
+
+            cards.append(
+                {
+                    "id": card_id,
+                    "name": card_name,
+                    "kind": kind,
+                    "work": work,
+                    "product": product,
+                }
+            )
+
+    return cards
+
+
+def get_wiki_cards(existing):
+    result = []
+
+    success_pages = 0
+
+    print("")
+    print("========================================")
+    print("Wiki取得開始")
+    print("========================================")
+
+    for index, (kind, work, path) in enumerate(
+        WIKI_PAGES,
+        start=1,
+    ):
+        print(
+            f"\nWiki {index}/{len(WIKI_PAGES)}: "
+            f"{work} {kind}"
+        )
+
+        cards = parse_wiki_page(
+            kind,
+            work,
+            path,
+        )
+
+        print(
+            f"  → {len(cards)} 件"
+        )
+
+        if cards:
+            success_pages += 1
+            result.extend(cards)
+
+        # Wikiへの連続アクセスを避ける
+        if index < len(WIKI_PAGES):
+            print(
+                f"  次のページまで "
+                f"{WIKI_PAGE_DELAY}秒待機"
+            )
+            time.sleep(WIKI_PAGE_DELAY)
+
+    # 重複排除
+    unique = {}
+
+    for card in result:
+        unique[card["id"]] = card
+
+    result = list(unique.values())
+
+    print("")
+    print(
+        f"Wiki取得件数: {len(result)}"
+    )
+    print(
+        f"正常取得ページ: "
+        f"{success_pages}/{len(WIKI_PAGES)}"
+    )
+
+    # Wikiが一時的に死んでいる場合
+    # 既存のcards.jsonを絶対に消さない
+    if len(result) < 100:
+
+        if existing:
+            print("")
+            print(
+                "Wiki取得件数が少なすぎます。"
+            )
+            print(
+                "既存のcards.jsonを維持します。"
+            )
+            print(
+                f"既存データ: {len(existing)} 件"
+            )
+
+            return list(existing.values())
+
+        raise RuntimeError(
+            "Wiki取得に失敗し、"
+            "既存データもありません。"
+        )
+
+    return result
+
+
+# ------------------------------------------------------------
+# Official
+# ------------------------------------------------------------
+
+def official_search(card_id):
+    url = (
+        f"{OFFICIAL_BASE}/cardlist/searchresults/"
+    )
+
+    response = get(
+        url,
+        params={"cardno": card_id},
+        retry=2,
+    )
+
+    if response is None:
+        return None
+
+    return response.text
 
 
 def extract_official_cards(html, base_id):
+    if not html:
+        return []
+
     soup = BeautifulSoup(
         html,
         "html.parser",
@@ -262,9 +368,7 @@ def extract_official_cards(html, base_id):
     )
 
     pattern = re.compile(
-        r"(?:PL!|LL-)"
-        r"[A-Za-z0-9!_\-]+"
-        r"-\d{2,3}"
+        r"(?:PL!|LL-)[A-Za-z0-9!_-]+-\d{2,3}"
         r"(?:-[A-Za-z0-9＋+]+)?"
     )
 
@@ -273,55 +377,42 @@ def extract_official_cards(html, base_id):
     for card_id in pattern.findall(text):
         card_id = normalize_card_id(card_id)
 
-        if card_id not in found:
-            found.append(card_id)
+        if get_base_id(card_id) != get_base_id(
+            base_id
+        ):
+            continue
 
-    target = get_base_id(base_id)
-
-    result = []
-
-    for card_id in found:
-        if get_base_id(card_id) == target:
-            result.append({
+        found.append(
+            {
                 "id": card_id,
-            })
+            }
+        )
 
     unique = {}
 
-    for card in result:
+    for card in found:
         unique[card["id"]] = card
 
     return list(unique.values())
 
 
 def supplement_official(card):
-    base_id = card["id"]
-
-    html = official_search(base_id)
+    html = official_search(
+        card["id"]
+    )
 
     if not html:
         return []
 
-    official_cards = extract_official_cards(
+    return extract_official_cards(
         html,
-        base_id,
+        card["id"],
     )
 
-    result = []
 
-    for official_card in official_cards:
-        new_card = dict(card)
-
-        new_card["id"] = official_card["id"]
-
-        result.append(new_card)
-
-    return result
-
-
-# ============================================================
-# 既存データ
-# ============================================================
+# ------------------------------------------------------------
+# Existing
+# ------------------------------------------------------------
 
 def load_existing():
     if not os.path.exists(OUTPUT):
@@ -354,56 +445,112 @@ def load_existing():
         return result
 
     except Exception as e:
-        print(f"既存JSON読み込み失敗: {e}")
+        print(
+            f"既存データ読み込み失敗: {e}"
+        )
+
         return {}
 
 
-def merge_cards(old, new):
-    result = dict(old)
+def merge_card(old, new):
+    """
+    新しい値が空なら古い値を残す。
+    """
+
+    merged = dict(old)
 
     for key, value in new.items():
-        if value not in ("", None, []):
-            result[key] = value
 
-    return result
+        if value in (
+            None,
+            "",
+            [],
+        ):
+            continue
+
+        merged[key] = value
+
+    return merged
 
 
-# ============================================================
-# メイン
-# ============================================================
+# ------------------------------------------------------------
+# Main
+# ------------------------------------------------------------
 
 def main():
-    print("=" * 50)
-    print("ラブカ カード同期開始")
-    print("=" * 50)
+
+    print("")
+    print("========================================")
+    print("ラブカ在庫データ同期")
+    print("========================================")
 
     existing = load_existing()
 
-    print(f"既存データ件数: {len(existing)}")
+    print(
+        f"既存データ件数: {len(existing)}"
+    )
 
     # --------------------------------------------------------
     # Wiki
     # --------------------------------------------------------
 
-    wiki_cards = get_wiki_cards()
+    wiki_cards = get_wiki_cards(
+        existing
+    )
+
+    # 既存データを最初から保持
+    final_cards = dict(existing)
+
+    # Wiki情報を反映
+    for card in wiki_cards:
+
+        card_id = card["id"]
+
+        if card_id in final_cards:
+            final_cards[card_id] = merge_card(
+                final_cards[card_id],
+                card,
+            )
+        else:
+            final_cards[card_id] = card
+
+    print(
+        f"Wiki反映後: {len(final_cards)} 件"
+    )
 
     # --------------------------------------------------------
-    # 公式
+    # Official補完
     # --------------------------------------------------------
 
-    final_cards = {}
+    print("")
+    print("========================================")
+    print("公式サイト補完")
+    print("========================================")
 
     official_success = 0
-    official_failed = 0
-    variant_count = 0
+    official_fail = 0
+
+    # 新規カードを優先。
+    # 既存カードを毎回919件問い合わせない。
+    new_cards = [
+        card
+        for card in wiki_cards
+        if card["id"] not in existing
+    ]
+
+    print(
+        f"今回の新規カード: "
+        f"{len(new_cards)} 件"
+    )
 
     for index, card in enumerate(
-        wiki_cards,
-        1,
+        new_cards,
+        start=1,
     ):
+
         print(
-            f"[{index}/{len(wiki_cards)}] "
-            f"{card['id']} {card['name']}"
+            f"[{index}/{len(new_cards)}] "
+            f"{card['id']}"
         )
 
         official_cards = supplement_official(
@@ -411,68 +558,67 @@ def main():
         )
 
         if official_cards:
+
             official_success += 1
-            variant_count += len(official_cards)
 
             for official_card in official_cards:
-                card_id = official_card["id"]
 
-                old = existing.get(
-                    card_id,
-                    {},
+                official_id = official_card[
+                    "id"
+                ]
+
+                base = dict(
+                    final_cards.get(
+                        card["id"],
+                        card,
+                    )
                 )
 
-                final_cards[card_id] = merge_cards(
-                    old,
-                    official_card,
+                base["id"] = official_id
+
+                final_cards[official_id] = merge_card(
+                    final_cards.get(
+                        official_id,
+                        {},
+                    ),
+                    base,
                 )
 
         else:
-            official_failed += 1
+            official_fail += 1
 
-            # 公式取得失敗でもWikiデータを保存
-            card_id = card["id"]
+        # 公式サイトにも負荷をかけない
+        time.sleep(0.5)
 
-            old = existing.get(
-                card_id,
-                {},
-            )
-
-            final_cards[card_id] = merge_cards(
-                old,
-                card,
-            )
-
-        time.sleep(0.15)
+    print("")
+    print(
+        f"公式補完成功: "
+        f"{official_success}"
+    )
+    print(
+        f"公式補完失敗: "
+        f"{official_fail}"
+    )
 
     # --------------------------------------------------------
-    # 既存データを保持
+    # Save
     # --------------------------------------------------------
 
-    for card_id, card in existing.items():
-        if card_id not in final_cards:
-            final_cards[card_id] = card
+    os.makedirs(
+        os.path.dirname(OUTPUT),
+        exist_ok=True,
+    )
 
-    # --------------------------------------------------------
-    # 保存
-    # --------------------------------------------------------
+    cards = list(
+        final_cards.values()
+    )
 
-    output = list(final_cards.values())
-
-    output.sort(
-        key=lambda card: card.get(
+    cards.sort(
+        key=lambda x: x.get(
             "id",
             "",
         )
     )
-
-    output_dir = os.path.dirname(OUTPUT)
-
-    if output_dir:
-        os.makedirs(
-            output_dir,
-            exist_ok=True,
-        )
 
     with open(
         OUTPUT,
@@ -480,26 +626,21 @@ def main():
         encoding="utf-8",
     ) as f:
         json.dump(
-            output,
+            cards,
             f,
             ensure_ascii=False,
             indent=2,
         )
 
-    # --------------------------------------------------------
-    # 結果
-    # --------------------------------------------------------
-
-    print()
-    print("=" * 50)
-    print("同期完了")
-    print("=" * 50)
-    print(f"Wiki基本カード: {len(wiki_cards)}")
-    print(f"公式取得成功: {official_success}")
-    print(f"公式取得失敗: {official_failed}")
-    print(f"公式バリエーション: {variant_count}")
-    print(f"最終カード件数: {len(output)}")
-    print("=" * 50)
+    print("")
+    print("========================================")
+    print(
+        f"最終カード件数: {len(cards)}"
+    )
+    print(
+        f"保存先: {OUTPUT}"
+    )
+    print("========================================")
 
 
 if __name__ == "__main__":
