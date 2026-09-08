@@ -1,8 +1,22 @@
 {
   "name": "ラブカ コレクション管理",
-  "short_name": "ラブカ管理",
-  "start_url": ".",
+  "short_name": "ラブカ在庫管理",
+  "start_url": "./",
   "display": "standalone",
-  "background_color": "#f7f7f9",
-  "theme_color": "#fff"
+  "background_color": "#ffffff",
+  "theme_color": "#ffffff",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
 }
