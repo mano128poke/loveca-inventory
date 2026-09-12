@@ -200,22 +200,45 @@ select {
   margin-right: 4px;
 }
 
+/* =========================
+   所持・使用枚数
+   ========================= */
+
+.inventory-area {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+.inventory-group {
+  text-align: center;
+}
+
+.inventory-label {
+  font-size: 12px;
+  color: #777;
+  margin-bottom: 4px;
+}
+
 .inventory {
   display: flex;
   align-items: center;
-  gap: 10px;
-  margin-left: auto;
+  justify-content: center;
+  gap: 6px;
 }
 
 .inventory button {
-  width: 48px;
-  height: 48px;
+  width: 44px;
+  height: 44px;
   border: 1px solid #ccc;
   background: white;
   border-radius: 10px;
-  font-size: 28px;
+  font-size: 25px;
   line-height: 1;
   cursor: pointer;
+  flex-shrink: 0;
 }
 
 .inventory button:active {
@@ -223,10 +246,33 @@ select {
 }
 
 .inventory-count {
-  min-width: 25px;
+  min-width: 28px;
   text-align: center;
-  font-size: 20px;
+  font-size: 19px;
   font-weight: bold;
+}
+
+.used-count {
+  color: #555;
+}
+
+.used-available {
+  font-size: 11px;
+  color: #999;
+  margin-top: 4px;
+  white-space: nowrap;
+}
+
+.used-plus-button:disabled {
+  color: #ccc;
+  background: #f7f7f7;
+  cursor: default;
+}
+
+.used-minus-button:disabled {
+  color: #ccc;
+  background: #f7f7f7;
+  cursor: default;
 }
 
 .more-button {
@@ -317,7 +363,7 @@ select {
 
   .card {
     padding: 12px;
-    gap: 12px;
+    gap: 10px;
   }
 
   .card-image-wrap {
@@ -334,18 +380,31 @@ select {
     font-size: 13px;
   }
 
+  .inventory-area {
+    gap: 6px;
+  }
+
   .inventory {
-    gap: 5px;
+    gap: 3px;
   }
 
   .inventory button {
-    width: 42px;
-    height: 42px;
-    font-size: 24px;
+    width: 34px;
+    height: 38px;
+    font-size: 21px;
   }
 
   .inventory-count {
-    font-size: 18px;
+    min-width: 22px;
+    font-size: 17px;
+  }
+
+  .inventory-label {
+    font-size: 11px;
+  }
+
+  .used-available {
+    font-size: 10px;
   }
 
   .image-modal {
@@ -356,8 +415,13 @@ select {
     max-width: 96vw;
     max-height: 88vh;
   }
-}
+
   .header-buttons {
+    margin-top: 14px;
+  }
+}
+
+.header-buttons {
   margin-top: 14px;
 }
 
@@ -384,6 +448,7 @@ select {
 </head>
 
 <body>
+
 <header>
   <h1>ラブカ コレクション管理</h1>
 
@@ -407,6 +472,7 @@ select {
 <div class="container">
 
   <div class="stats">
+
     <div class="stat">
       <div class="stat-label">登録カード</div>
       <div class="stat-value" id="totalCards">0</div>
@@ -426,7 +492,9 @@ select {
       <div class="stat-label">収集率</div>
       <div class="stat-value" id="collectionRate">0%</div>
     </div>
+
   </div>
+
 
   <div class="filters">
 
@@ -444,6 +512,7 @@ select {
     <select id="rarityFilter">
       <option value="">レアリティすべて</option>
     </select>
+
 
     <div class="button-row">
 
@@ -491,7 +560,11 @@ select {
 
     </div>
 
-    <div class="button-row" style="margin-top:10px;">
+
+    <div
+      class="button-row"
+      style="margin-top:10px;"
+    >
 
       <button
         class="filter-button active"
@@ -516,7 +589,11 @@ select {
 
     </div>
 
-    <div class="button-row" style="margin-top:10px;">
+
+    <div
+      class="button-row"
+      style="margin-top:10px;"
+    >
 
       <button
         class="filter-button active"
@@ -543,11 +620,20 @@ select {
 
   </div>
 
-  <div class="result-info" id="resultInfo">
+
+  <div
+    class="result-info"
+    id="resultInfo"
+  >
     読み込み中...
   </div>
 
-  <div id="cards" class="cards"></div>
+
+  <div
+    id="cards"
+    class="cards"
+  ></div>
+
 
   <button
     id="moreButton"
@@ -598,16 +684,46 @@ select {
 
 <script>
 
+/* =========================
+   基本設定
+   ========================= */
+
 const DATA_URL =
   "data/cards.json?timestamp=" + Date.now();
 
+
+/*
+ * ★重要★
+ *
+ * これは今まで使っていた所持枚数データの保存先。
+ * 絶対に変更しない。
+ */
 const STORAGE_KEY =
   "loveca_inventory_v4";
+
+
+/*
+ * 新しく追加するデッキ使用枚数の保存先。
+ *
+ * 所持枚数とは完全に別管理。
+ */
+const USED_STORAGE_KEY =
+  "loveca_used_v1";
 
 
 let cards = [];
 
 let inventory = {};
+
+/*
+ * カードごとのデッキ使用枚数
+ *
+ * 例：
+ * {
+ *   "カードID": 3
+ * }
+ */
+let usedInventory = {};
 
 let currentWork = "";
 
@@ -630,15 +746,20 @@ async function loadCards() {
       await fetch(DATA_URL);
 
     if (!response.ok) {
+
       throw new Error(
         "カードデータ取得失敗"
       );
+
     }
+
 
     cards =
       await response.json();
 
+
     loadInventory();
+
 
     document.getElementById(
       "syncInfo"
@@ -647,9 +768,11 @@ async function loadCards() {
       cards.length.toLocaleString() +
       "件";
 
+
     setupFilters();
 
     render();
+
 
   } catch (error) {
 
@@ -666,11 +789,16 @@ async function loadCards() {
 
 
 /* =========================
-   所持データ
+   所持データ・使用データ
    ========================= */
 
 function loadInventory() {
 
+  /*
+   * 既存の所持枚数
+   *
+   * loveca_inventory_v4 は今まで通り。
+   */
   try {
 
     inventory =
@@ -686,14 +814,81 @@ function loadInventory() {
 
   }
 
+
+  /*
+   * 新しい使用枚数
+   */
+  try {
+
+    usedInventory =
+      JSON.parse(
+        localStorage.getItem(
+          USED_STORAGE_KEY
+        ) || "{}"
+      );
+
+  } catch {
+
+    usedInventory = {};
+
+  }
+
 }
 
 
+/* =========================
+   保存
+   ========================= */
+
 function saveInventory() {
 
+  /*
+   * 既存の所持枚数データ
+   *
+   * ★ここは今までと完全に同じ★
+   */
   localStorage.setItem(
     STORAGE_KEY,
     JSON.stringify(inventory)
+  );
+
+
+  /*
+   * 新しい使用枚数データ
+   */
+  localStorage.setItem(
+    USED_STORAGE_KEY,
+    JSON.stringify(usedInventory)
+  );
+
+}
+
+
+/* =========================
+   使用枚数取得
+   ========================= */
+
+function getUsedCount(id) {
+
+  const owned =
+    Number(
+      inventory[id] || 0
+    );
+
+  const used =
+    Number(
+      usedInventory[id] || 0
+    );
+
+
+  /*
+   * 万が一、
+   * 所持枚数より使用枚数が多くなっていた場合でも
+   * 表示上は所持枚数までにする。
+   */
+  return Math.min(
+    Math.max(used, 0),
+    owned
   );
 
 }
@@ -719,10 +914,12 @@ function setupFilters() {
         )
     );
 
+
   const productSelect =
     document.getElementById(
       "productFilter"
     );
+
 
   for (
     const product of products
@@ -754,10 +951,12 @@ function setupFilters() {
     )]
     .sort();
 
+
   const raritySelect =
     document.getElementById(
       "rarityFilter"
     );
+
 
   for (
     const rarity of rarities
@@ -786,8 +985,11 @@ function setupFilters() {
     .addEventListener(
       "input",
       () => {
+
         displayCount = 100;
+
         render();
+
       }
     );
 
@@ -795,8 +997,11 @@ function setupFilters() {
   productSelect.addEventListener(
     "change",
     () => {
+
       displayCount = 100;
+
       render();
+
     }
   );
 
@@ -804,8 +1009,11 @@ function setupFilters() {
   raritySelect.addEventListener(
     "change",
     () => {
+
       displayCount = 100;
+
       render();
+
     }
   );
 
@@ -823,6 +1031,7 @@ function setupFilters() {
           currentWork =
             button.dataset.work;
 
+
           document
             .querySelectorAll(
               "[data-work]"
@@ -834,9 +1043,11 @@ function setupFilters() {
                 )
             );
 
+
           button.classList.add(
             "active"
           );
+
 
           displayCount = 100;
 
@@ -861,6 +1072,7 @@ function setupFilters() {
           currentKind =
             button.dataset.kind;
 
+
           document
             .querySelectorAll(
               "[data-kind]"
@@ -872,9 +1084,11 @@ function setupFilters() {
                 )
             );
 
+
           button.classList.add(
             "active"
           );
+
 
           displayCount = 100;
 
@@ -899,6 +1113,7 @@ function setupFilters() {
           currentOwnership =
             button.dataset.ownership;
 
+
           document
             .querySelectorAll(
               "[data-ownership]"
@@ -910,9 +1125,11 @@ function setupFilters() {
                 )
             );
 
+
           button.classList.add(
             "active"
           );
+
 
           displayCount = 100;
 
@@ -953,12 +1170,14 @@ function getFilteredCards() {
       .trim()
       .toLowerCase();
 
+
   const product =
     document
       .getElementById(
         "productFilter"
       )
       .value;
+
 
   const rarity =
     document
@@ -974,7 +1193,9 @@ function getFilteredCards() {
       currentWork &&
       card.work !== currentWork
     ) {
+
       return false;
+
     }
 
 
@@ -982,7 +1203,9 @@ function getFilteredCards() {
       currentKind &&
       card.kind !== currentKind
     ) {
+
       return false;
+
     }
 
 
@@ -990,7 +1213,9 @@ function getFilteredCards() {
       product &&
       card.product !== product
     ) {
+
       return false;
+
     }
 
 
@@ -998,7 +1223,9 @@ function getFilteredCards() {
       rarity &&
       card.rarity !== rarity
     ) {
+
       return false;
+
     }
 
 
@@ -1013,7 +1240,9 @@ function getFilteredCards() {
       "owned" &&
       count <= 0
     ) {
+
       return false;
+
     }
 
 
@@ -1022,7 +1251,9 @@ function getFilteredCards() {
       "missing" &&
       count > 0
     ) {
+
       return false;
+
     }
 
 
@@ -1053,7 +1284,9 @@ function getFilteredCards() {
       if (
         !target.includes(search)
       ) {
+
         return false;
+
       }
 
     }
@@ -1088,6 +1321,7 @@ function render() {
       "cards"
     );
 
+
   container.innerHTML = "";
 
 
@@ -1100,13 +1334,34 @@ function render() {
         "div"
       );
 
+
     element.className =
       "card";
 
 
+    /*
+     * 所持枚数
+     */
     const count =
       Number(
         inventory[card.id] || 0
+      );
+
+
+    /*
+     * 使用枚数
+     */
+    const usedCount =
+      getUsedCount(card.id);
+
+
+    /*
+     * 使用可能枚数
+     */
+    const availableCount =
+      Math.max(
+        0,
+        count - usedCount
       );
 
 
@@ -1139,6 +1394,7 @@ function render() {
     let kindText =
       "";
 
+
     if (
       card.kind ===
       "member"
@@ -1169,6 +1425,7 @@ function render() {
         ${imageHTML}
       </div>
 
+
       <div class="card-info">
 
         <div class="card-name">
@@ -1176,6 +1433,7 @@ function render() {
             card.name || "名称不明"
           )}
         </div>
+
 
         <div class="card-meta">
 
@@ -1187,6 +1445,7 @@ function render() {
               : ""
           }
 
+
           ${
             kindText
               ? `<span class="badge">
@@ -1194,6 +1453,7 @@ function render() {
                  </span>`
               : ""
           }
+
 
           ${
             card.rarity
@@ -1203,13 +1463,17 @@ function render() {
               : ""
           }
 
+
           <br>
+
 
           ${escapeHTML(
             card.id || ""
           )}
 
+
           <br>
+
 
           ${
             card.product
@@ -1223,27 +1487,94 @@ function render() {
 
       </div>
 
-      <div class="inventory">
 
-        <button
-          type="button"
-          class="minus-button"
-          data-id="${escapeHTML(card.id)}"
-        >
-          −
-        </button>
+      <!-- =====================
+           所持・使用
+           ===================== -->
 
-        <div class="inventory-count">
-          ${count}
+      <div class="inventory-area">
+
+
+        <!-- 所持枚数 -->
+
+        <div class="inventory-group">
+
+          <div class="inventory-label">
+            所持
+          </div>
+
+          <div class="inventory">
+
+            <button
+              type="button"
+              class="minus-button"
+              data-id="${escapeHTML(card.id)}"
+            >
+              −
+            </button>
+
+
+            <div class="inventory-count">
+              ${count}
+            </div>
+
+
+            <button
+              type="button"
+              class="plus-button"
+              data-id="${escapeHTML(card.id)}"
+            >
+              ＋
+            </button>
+
+          </div>
+
         </div>
 
-        <button
-          type="button"
-          class="plus-button"
-          data-id="${escapeHTML(card.id)}"
-        >
-          ＋
-        </button>
+
+        <!-- 使用枚数 -->
+
+        <div class="inventory-group">
+
+          <div class="inventory-label">
+            使用
+          </div>
+
+          <div class="inventory">
+
+            <button
+              type="button"
+              class="used-minus-button"
+              data-id="${escapeHTML(card.id)}"
+              ${usedCount <= 0 ? "disabled" : ""}
+            >
+              −
+            </button>
+
+
+            <div class="inventory-count used-count">
+              ${usedCount}
+            </div>
+
+
+            <button
+              type="button"
+              class="used-plus-button"
+              data-id="${escapeHTML(card.id)}"
+              ${usedCount >= count ? "disabled" : ""}
+            >
+              ＋
+            </button>
+
+          </div>
+
+
+          <div class="used-available">
+            使用可能：${availableCount}枚
+          </div>
+
+        </div>
+
 
       </div>
 
@@ -1256,6 +1587,10 @@ function render() {
 
   }
 
+
+  /* =========================
+     所持枚数 −
+     ========================= */
 
   container
     .querySelectorAll(
@@ -1270,10 +1605,12 @@ function render() {
           const id =
             button.dataset.id;
 
+
           const current =
             Number(
               inventory[id] || 0
             );
+
 
           if (
             current > 0
@@ -1282,7 +1619,29 @@ function render() {
             inventory[id] =
               current - 1;
 
+
+            /*
+             * 所持枚数を減らした結果、
+             * 使用枚数の方が多くならないようにする。
+             */
+            const currentUsed =
+              Number(
+                usedInventory[id] || 0
+              );
+
+
+            if (
+              currentUsed >
+              inventory[id]
+            ) {
+
+              usedInventory[id] =
+                inventory[id];
+
+            }
+
           }
+
 
           saveInventory();
 
@@ -1293,6 +1652,10 @@ function render() {
 
     });
 
+
+  /* =========================
+     所持枚数 ＋
+     ========================= */
 
   container
     .querySelectorAll(
@@ -1307,13 +1670,115 @@ function render() {
           const id =
             button.dataset.id;
 
+
           const current =
             Number(
               inventory[id] || 0
             );
 
+
           inventory[id] =
             current + 1;
+
+
+          saveInventory();
+
+          render();
+
+        }
+      );
+
+    });
+
+
+  /* =========================
+     使用枚数 −
+     ========================= */
+
+  container
+    .querySelectorAll(
+      ".used-minus-button"
+    )
+    .forEach(button => {
+
+      button.addEventListener(
+        "click",
+        () => {
+
+          const id =
+            button.dataset.id;
+
+
+          const current =
+            Number(
+              usedInventory[id] || 0
+            );
+
+
+          if (
+            current > 0
+          ) {
+
+            usedInventory[id] =
+              current - 1;
+
+          }
+
+
+          saveInventory();
+
+          render();
+
+        }
+      );
+
+    });
+
+
+  /* =========================
+     使用枚数 ＋
+     ========================= */
+
+  container
+    .querySelectorAll(
+      ".used-plus-button"
+    )
+    .forEach(button => {
+
+      button.addEventListener(
+        "click",
+        () => {
+
+          const id =
+            button.dataset.id;
+
+
+          const owned =
+            Number(
+              inventory[id] || 0
+            );
+
+
+          const current =
+            Number(
+              usedInventory[id] || 0
+            );
+
+
+          /*
+           * 使用枚数は所持枚数を
+           * 超えないようにする。
+           */
+          if (
+            current <
+            owned
+          ) {
+
+            usedInventory[id] =
+              current + 1;
+
+          }
+
 
           saveInventory();
 
@@ -1354,6 +1819,7 @@ function render() {
     moreButton.style.display =
       "block";
 
+
     moreButton.textContent =
       "もっと読み込む";
 
@@ -1379,6 +1845,7 @@ function updateStats() {
 
   let ownedCards =
     0;
+
 
   let ownedQuantity =
     0;
@@ -1484,15 +1951,18 @@ const imageModal =
     "imageModal"
   );
 
+
 const imageModalImage =
   document.getElementById(
     "imageModalImage"
   );
 
+
 const imageModalClose =
   document.getElementById(
     "imageModalClose"
   );
+
 
 const imageModalBackdrop =
   document.getElementById(
@@ -1508,12 +1978,15 @@ function openImageModal(
   imageModalImage.src =
     src;
 
+
   imageModalImage.alt =
     alt || "";
+
 
   imageModal.classList.add(
     "active"
   );
+
 
   document.body.style.overflow =
     "hidden";
@@ -1527,8 +2000,10 @@ function closeImageModal() {
     "active"
   );
 
+
   imageModalImage.src =
     "";
+
 
   document.body.style.overflow =
     "";
@@ -1539,6 +2014,7 @@ function closeImageModal() {
 /*
  * カード画像をタップ
  */
+
 document.addEventListener(
   "click",
   event => {
@@ -1548,8 +2024,11 @@ document.addEventListener(
         ".card-image"
       );
 
+
     if (!image) {
+
       return;
+
     }
 
 
@@ -1566,6 +2045,7 @@ document.addEventListener(
 /*
  * ×ボタン
  */
+
 imageModalClose.addEventListener(
   "click",
   closeImageModal
@@ -1575,6 +2055,7 @@ imageModalClose.addEventListener(
 /*
  * 背景をタップ
  */
+
 imageModalBackdrop.addEventListener(
   "click",
   closeImageModal
@@ -1584,6 +2065,7 @@ imageModalBackdrop.addEventListener(
 /*
  * Escキー
  */
+
 document.addEventListener(
   "keydown",
   event => {
