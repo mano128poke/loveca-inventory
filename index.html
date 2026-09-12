@@ -3,593 +3,621 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<title>ラブカ コレクション管理</title>
+<title>ラブカ 在庫管理</title>
 
 <link rel="icon" href="favicon.ico" sizes="any">
 <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
 <link rel="icon" type="image/png" sizes="16x16" href="favicon-16.png">
 <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
 <link rel="manifest" href="manifest.json">
-  
+
 <style>
-* {
-  box-sizing: border-box;
+:root{
+  --bg:#f6f7fb;
+  --card:#fff;
+  --text:#20232a;
+  --muted:#6b7280;
+  --line:#e5e7eb;
+  --accent:#8b5cf6;
+  --danger:#ef4444;
+  --ok:#10b981;
+  --warn:#f59e0b;
 }
 
-body {
-  margin: 0;
-  background: #f5f5f7;
-  color: #222;
-  font-family:
-    -apple-system,
-    BlinkMacSystemFont,
-    "Noto Sans JP",
-    "Yu Gothic",
-    sans-serif;
+*{
+  box-sizing:border-box
 }
 
-header {
-  background: white;
-  padding: 28px 16px 22px;
-  border-bottom: 1px solid #ddd;
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--text);
+  font-family:system-ui,-apple-system,"Noto Sans JP",sans-serif
 }
 
-header h1 {
-  margin: 0 0 12px;
-  font-size: 28px;
+header{
+  background:linear-gradient(135deg,#7c3aed,#ec4899);
+  color:#fff;
+  padding:24px 20px
 }
 
-#syncInfo {
-  color: #666;
-  font-size: 18px;
+header .inner{
+  max-width:1200px;
+  margin:auto
 }
 
-.container {
-  max-width: 1000px;
-  margin: 0 auto;
-  padding: 16px;
+h1{
+  margin:0 0 5px;
+  font-size:26px
 }
 
-.stats {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 10px;
-  margin-bottom: 16px;
+.sub{
+  opacity:.9;
+  font-size:13px
 }
 
-.stat {
-  background: white;
-  border-radius: 14px;
-  padding: 14px;
-  text-align: center;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+main{
+  max-width:1200px;
+  margin:18px auto;
+  padding:0 14px
 }
 
-.stat-label {
-  font-size: 13px;
-  color: #777;
+.stats{
+  display:grid;
+  grid-template-columns:repeat(5,1fr);
+  gap:12px;
+  margin-bottom:14px
 }
 
-.stat-value {
-  margin-top: 5px;
-  font-size: 22px;
-  font-weight: bold;
+.stat{
+  background:var(--card);
+  border:1px solid var(--line);
+  border-radius:14px;
+  padding:15px
 }
 
-.filters {
-  background: white;
-  border-radius: 16px;
-  padding: 14px;
-  margin-bottom: 16px;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+.stat b{
+  display:block;
+  font-size:23px
 }
 
-.search {
-  width: 100%;
-  padding: 14px;
-  border: 1px solid #ccc;
-  border-radius: 10px;
-  font-size: 16px;
-  margin-bottom: 12px;
+.stat span{
+  font-size:12px;
+  color:var(--muted)
 }
 
-select {
-  width: 100%;
-  padding: 13px;
-  border: 1px solid #ccc;
-  border-radius: 10px;
-  background: white;
-  font-size: 16px;
-  margin-bottom: 10px;
+.toolbar{
+  background:var(--card);
+  border:1px solid var(--line);
+  border-radius:14px;
+  padding:14px;
+  margin-bottom:14px;
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap
 }
 
-.button-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
+input,select,button{
+  font:inherit
 }
 
-.filter-button {
-  padding: 12px 17px;
-  border: 1px solid #ccc;
-  border-radius: 10px;
-  background: white;
-  font-size: 16px;
-  cursor: pointer;
+input,select{
+  border:1px solid #d1d5db;
+  border-radius:9px;
+  padding:9px 10px;
+  background:#fff
 }
 
-.filter-button.active {
-  background: #555;
-  color: white;
-  border-color: #555;
+#search{
+  flex:1;
+  min-width:220px
 }
 
-.result-info {
-  color: #666;
-  margin: 14px 4px;
-  font-size: 16px;
+button{
+  border:0;
+  border-radius:9px;
+  padding:9px 12px;
+  cursor:pointer;
+  background:#eee
 }
 
-.cards {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
+button.primary{
+  background:var(--accent);
+  color:white
 }
 
-.card {
-  background: white;
-  border-radius: 18px;
-  padding: 14px;
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  box-shadow: 0 1px 5px rgba(0,0,0,0.06);
+button.danger{
+  background:#fee2e2;
+  color:#991b1b
 }
 
-.card-image-wrap {
-  width: 115px;
-  min-width: 115px;
-  height: 160px;
-  border-radius: 10px;
-  overflow: hidden;
-  background: #eee;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+.table-wrap{
+  background:var(--card);
+  border:1px solid var(--line);
+  border-radius:14px;
+  overflow:auto
 }
 
-.card-image {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-  cursor: zoom-in;
-  display: block;
+table{
+  width:100%;
+  border-collapse:collapse;
+  min-width:900px
 }
 
-.no-image {
-  color: #999;
-  font-size: 13px;
-  text-align: center;
+th,td{
+  padding:11px 12px;
+  border-bottom:1px solid var(--line);
+  text-align:left;
+  font-size:13px
 }
 
-.card-info {
-  flex: 1;
-  min-width: 0;
+th{
+  background:#fafafa;
+  position:sticky;
+  top:0;
+  z-index:1
 }
 
-.card-name {
-  font-size: 20px;
-  font-weight: bold;
-  margin-bottom: 7px;
-  word-break: break-word;
+.card-name{
+  background:none;
+  padding:0;
+  color:inherit;
+  text-align:left
 }
 
-.card-meta {
-  color: #666;
-  font-size: 14px;
-  line-height: 1.7;
+.card-name:hover{
+  color:var(--accent);
+  text-decoration:underline
 }
 
-.badge {
-  display: inline-block;
-  background: #eee;
-  color: #555;
-  border-radius: 8px;
-  padding: 2px 7px;
-  margin-right: 4px;
+.badge{
+  display:inline-block;
+  padding:3px 7px;
+  border-radius:999px;
+  background:#f3f4f6;
+  font-size:11px
 }
 
-.inventory {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-left: auto;
+.qty{
+  display:flex;
+  align-items:center;
+  gap:7px
 }
 
-.inventory button {
-  width: 48px;
-  height: 48px;
-  border: 1px solid #ccc;
-  background: white;
-  border-radius: 10px;
-  font-size: 28px;
-  line-height: 1;
-  cursor: pointer;
+.qty button{
+  width:30px;
+  height:30px;
+  padding:0;
+  font-size:18px
 }
 
-.inventory button:active {
-  background: #eee;
+.qty strong{
+  min-width:28px;
+  text-align:center
 }
 
-.inventory-count {
-  min-width: 25px;
-  text-align: center;
-  font-size: 20px;
-  font-weight: bold;
+.need{
+  font-weight:700
 }
 
-.more-button {
-  width: 100%;
-  margin-top: 16px;
-  padding: 15px;
-  border: 1px solid #ccc;
-  border-radius: 12px;
-  background: white;
-  font-size: 16px;
-  cursor: pointer;
+.used{
+  font-weight:700;
+  color:#2563eb
 }
 
-.more-button:active {
-  background: #eee;
+.available{
+  font-size:11px;
+  color:var(--muted);
+  margin-top:3px
 }
 
-/* =========================
-   画像拡大モーダル
-   ========================= */
-
-.image-modal {
-  display: none;
-  position: fixed;
-  inset: 0;
-  z-index: 9999;
-  align-items: center;
-  justify-content: center;
-  padding: 20px;
+.ok{
+  color:var(--ok)
 }
 
-.image-modal.active {
-  display: flex;
+.warn{
+  color:var(--warn)
 }
 
-.image-modal-backdrop {
-  position: absolute;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.88);
+.bad{
+  color:var(--danger)
 }
 
-.image-modal-content {
-  position: relative;
-  z-index: 1;
-  max-width: 96vw;
-  max-height: 94vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+.card-link{
+  color:#6d28d9;
+  text-decoration:underline;
+  cursor:pointer
 }
 
-.image-modal-content img {
-  display: block;
-  max-width: 96vw;
-  max-height: 90vh;
-  width: auto;
-  height: auto;
-  object-fit: contain;
-  border-radius: 8px;
-  box-shadow: 0 4px 30px rgba(0,0,0,0.5);
+.empty{
+  text-align:center;
+  padding:40px;
+  color:var(--muted)
 }
 
-.image-modal-close {
-  position: absolute;
-  top: -48px;
-  right: 0;
-  width: 42px;
-  height: 42px;
-  border: none;
-  border-radius: 50%;
-  background: white;
-  color: #333;
-  font-size: 30px;
-  line-height: 42px;
-  padding: 0;
-  cursor: pointer;
+.modal{
+  position:fixed;
+  inset:0;
+  background:#0008;
+  display:none;
+  align-items:center;
+  justify-content:center;
+  padding:15px
 }
 
-@media (max-width: 700px) {
+.modal.show{
+  display:flex
+}
 
-  header h1 {
-    font-size: 25px;
-  }
+.dialog{
+  background:white;
+  border-radius:16px;
+  max-width:700px;
+  width:100%;
+  padding:20px
+}
 
-  .stats {
-    grid-template-columns: repeat(2, 1fr);
-  }
+.dialog h2{
+  margin-top:0
+}
 
-  .card {
-    padding: 12px;
-    gap: 12px;
-  }
+.help{
+  font-size:13px;
+  color:var(--muted);
+  line-height:1.7
+}
 
-  .card-image-wrap {
-    width: 90px;
-    min-width: 90px;
-    height: 125px;
-  }
+.drop{
+  border:2px dashed #c4b5fd;
+  padding:25px;
+  text-align:center;
+  border-radius:12px;
+  margin:12px 0
+}
 
-  .card-name {
-    font-size: 17px;
-  }
+footer{
+  max-width:1200px;
+  margin:15px auto 30px;
+  padding:0 14px;
+  color:var(--muted);
+  font-size:12px
+}
 
-  .card-meta {
-    font-size: 13px;
-  }
+.image-modal{
+  position:fixed;
+  inset:0;
+  background:#000b;
+  display:none;
+  align-items:center;
+  justify-content:center;
+  padding:20px;
+  z-index:20
+}
 
-  .inventory {
-    gap: 5px;
-  }
+.image-modal.show{
+  display:flex
+}
 
-  .inventory button {
-    width: 42px;
-    height: 42px;
-    font-size: 24px;
-  }
+.image-box{
+  position:relative;
+  background:#fff;
+  border-radius:16px;
+  padding:12px;
+  max-width:min(92vw,520px);
+  max-height:94vh;
+  text-align:center
+}
 
-  .inventory-count {
-    font-size: 18px;
-  }
+.image-box img{
+  display:block;
+  max-width:100%;
+  max-height:78vh;
+  margin:auto;
+  object-fit:contain
+}
 
-  .image-modal {
-    padding: 8px;
-  }
+.image-title{
+  padding:8px 4px 2px;
+  font-weight:700
+}
 
-  .image-modal-content img {
-    max-width: 96vw;
-    max-height: 88vh;
+.image-close{
+  position:absolute;
+  right:-10px;
+  top:-10px;
+  width:36px;
+  height:36px;
+  border-radius:50%;
+  background:#fff;
+  box-shadow:0 2px 10px #0004;
+  font-size:20px
+}
+
+.image-note{
+  font-size:11px;
+  color:#777;
+  margin-top:3px
+}
+
+@media(max-width:900px){
+  .stats{
+    grid-template-columns:repeat(3,1fr)
   }
 }
-  .header-buttons {
-  margin-top: 14px;
-}
 
-.github-button {
-  display: inline-block;
-  padding: 12px 18px;
-  border-radius: 10px;
-  background: #24292f;
-  color: white;
-  text-decoration: none;
-  font-size: 15px;
-  font-weight: bold;
-  cursor: pointer;
-}
+@media(max-width:700px){
+  .stats{
+    grid-template-columns:repeat(2,1fr)
+  }
 
-.github-button:hover {
-  opacity: 0.9;
-}
+  header{
+    padding:18px 14px
+  }
 
-.github-button:active {
-  opacity: 0.75;
+  .toolbar{
+    padding:10px
+  }
 }
 </style>
 </head>
 
 <body>
+
 <header>
-  <h1>ラブカ コレクション管理</h1>
-
-  <div id="syncInfo">
-    カードデータ読み込み中...
-  </div>
-
-  <div class="header-buttons">
-    <a
-      href="https://github.com/mano128poke/loveca-inventory/actions/workflows/sync.yml"
-      target="_blank"
-      rel="noopener noreferrer"
-      class="github-button"
-    >
-      🔄 カード情報を更新
-    </a>
+  <div class="inner">
+    <h1>💜 ラブカ 在庫管理</h1>
+    <div class="sub">
+      ラブライブ！シリーズ オフィシャルカードゲーム用
+    </div>
   </div>
 </header>
 
+<main>
 
-<div class="container">
+<section class="stats">
 
-  <div class="stats">
-    <div class="stat">
-      <div class="stat-label">登録カード</div>
-      <div class="stat-value" id="totalCards">0</div>
-    </div>
-
-    <div class="stat">
-      <div class="stat-label">所持カード</div>
-      <div class="stat-value" id="ownedCards">0</div>
-    </div>
-
-    <div class="stat">
-      <div class="stat-label">所持枚数</div>
-      <div class="stat-value" id="ownedQuantity">0</div>
-    </div>
-
-    <div class="stat">
-      <div class="stat-label">収集率</div>
-      <div class="stat-value" id="collectionRate">0%</div>
-    </div>
+  <div class="stat">
+    <b id="cardCount">0</b>
+    <span>登録カード種類</span>
   </div>
 
-  <div class="filters">
-
-    <input
-      id="search"
-      class="search"
-      type="search"
-      placeholder="カード番号・カード名・商品名で検索"
-    >
-
-    <select id="productFilter">
-      <option value="">商品すべて</option>
-    </select>
-
-    <select id="rarityFilter">
-      <option value="">レアリティすべて</option>
-    </select>
-
-    <div class="button-row">
-
-      <button
-        class="filter-button active"
-        data-work=""
-      >
-        全作品
-      </button>
-
-      <button
-        class="filter-button"
-        data-work="μ's"
-      >
-        μ's
-      </button>
-
-      <button
-        class="filter-button"
-        data-work="Aqours"
-      >
-        Aqours
-      </button>
-
-      <button
-        class="filter-button"
-        data-work="虹ヶ咲"
-      >
-        虹ヶ咲
-      </button>
-
-      <button
-        class="filter-button"
-        data-work="Liella!"
-      >
-        Liella!
-      </button>
-
-      <button
-        class="filter-button"
-        data-work="蓮ノ空"
-      >
-        蓮ノ空
-      </button>
-
-    </div>
-
-    <div class="button-row" style="margin-top:10px;">
-
-      <button
-        class="filter-button active"
-        data-kind=""
-      >
-        全カード
-      </button>
-
-      <button
-        class="filter-button"
-        data-kind="member"
-      >
-        メンバーカード
-      </button>
-
-      <button
-        class="filter-button"
-        data-kind="live"
-      >
-        ライブカード
-      </button>
-
-    </div>
-
-    <div class="button-row" style="margin-top:10px;">
-
-      <button
-        class="filter-button active"
-        data-ownership="all"
-      >
-        すべて
-      </button>
-
-      <button
-        class="filter-button"
-        data-ownership="owned"
-      >
-        所持済み
-      </button>
-
-      <button
-        class="filter-button"
-        data-ownership="missing"
-      >
-        未所持
-      </button>
-
-    </div>
-
+  <div class="stat">
+    <b id="ownedCount">0</b>
+    <span>総所持枚数</span>
   </div>
 
-  <div class="result-info" id="resultInfo">
-    読み込み中...
+  <div class="stat">
+    <b id="usedCount">0</b>
+    <span>デッキ使用枚数</span>
   </div>
 
-  <div id="cards" class="cards"></div>
+  <div class="stat">
+    <b id="missingCount">0</b>
+    <span>不足枚数（必要数との差）</span>
+  </div>
 
-  <button
-    id="moreButton"
-    class="more-button"
-    style="display:none;"
+  <div class="stat">
+    <b id="completeCount">0</b>
+    <span>必要数を満たしたカード</span>
+  </div>
+
+</section>
+
+<section class="toolbar">
+
+  <input
+    id="search"
+    placeholder="カード名・カード番号で検索"
   >
-    もっと読み込む
+
+  <select id="typeFilter">
+    <option value="">カード種別：すべて</option>
+    <option value="メンバー">キャラクター</option>
+    <option value="ライブ">ライブ</option>
+    <option value="エネルギー">エネルギー</option>
+  </select>
+
+  <select id="schoolFilter">
+    <option value="">作品・学校：すべて</option>
+  </select>
+
+  <select id="unitFilter">
+    <option value="">ユニット：すべて</option>
+  </select>
+
+  <select id="setFilter">
+    <option value="">収録商品：すべて</option>
+  </select>
+
+  <select id="rarityFilter">
+    <option value="">レアリティ：すべて</option>
+  </select>
+
+  <select id="sortFilter">
+    <option value="id">並び：カード番号</option>
+    <option value="name">カード名 A→Z</option>
+    <option value="nameDesc">カード名 Z→A</option>
+    <option value="school">作品・学校</option>
+    <option value="unit">ユニット</option>
+  </select>
+
+  <select id="statusFilter">
+    <option value="">状態：すべて</option>
+    <option value="missing">不足のみ</option>
+    <option value="zero">0枚のみ</option>
+    <option value="complete">必要数達成</option>
+  </select>
+
+  <button class="primary" onclick="openImport()">
+    📥 カードマスターCSV
   </button>
+
+  <button onclick="exportCSV()">
+    📤 在庫CSV出力
+  </button>
+
+  <button class="danger" onclick="resetInventory()">
+    在庫リセット
+  </button>
+
+  <button onclick="resetUsed()">
+    デッキ使用リセット
+  </button>
+
+</section>
+
+<div class="table-wrap">
+
+<table>
+
+<thead>
+<tr>
+  <th>カード番号</th>
+  <th>カード名</th>
+  <th>種別</th>
+  <th>レアリティ</th>
+  <th>収録商品</th>
+  <th>所持</th>
+  <th>使用</th>
+  <th>必要</th>
+  <th>状態</th>
+</tr>
+</thead>
+
+<tbody id="rows"></tbody>
+
+</table>
 
 </div>
 
+</main>
 
-<!-- =========================
-     画像拡大ウィンドウ
-     ========================= -->
+<footer>
+データはこのブラウザのLocalStorageに保存されます。
+所持枚数とデッキ使用枚数は別々に管理できます。
+</footer>
+
 
 <div
-  id="imageModal"
   class="image-modal"
+  id="imageModal"
+  onclick="if(event.target===this)closeImage()"
 >
 
-  <div
-    id="imageModalBackdrop"
-    class="image-modal-backdrop"
-  ></div>
-
-  <div class="image-modal-content">
+  <div class="image-box">
 
     <button
-      id="imageModalClose"
-      class="image-modal-close"
-      type="button"
-      aria-label="閉じる"
+      class="image-close"
+      onclick="closeImage()"
     >
       ×
     </button>
 
     <img
-      id="imageModalImage"
-      src=""
-      alt=""
+      id="cardImage"
+      alt="カード画像"
     >
+
+    <div
+      class="image-title"
+      id="imageTitle"
+    ></div>
+
+    <div class="image-note">
+      公式カードリストの画像URLを登録すると表示できます
+    </div>
+
+  </div>
+
+</div>
+
+
+<div class="modal" id="modal">
+
+  <div class="dialog">
+
+    <h2>カードマスターCSVを読み込む</h2>
+
+    <div class="help">
+
+      CSV形式：
+      <b>
+        カード番号,カード名,レアリティ,収録商品,必要枚数,作品・学校,ユニット,画像URL,カード種別
+      </b>
+
+      <br>
+
+      1行目は見出しでも構いません。
+      既存のカード番号は情報を更新し、
+      所持枚数は維持します。
+
+      <br>
+
+      在庫CSV出力では、
+      所持枚数・使用枚数・使用可能枚数も出力されます。
+
+    </div>
+
+    <div class="drop">
+
+      <input
+        type="file"
+        id="csvFile"
+        accept=".csv,text/csv"
+      >
+
+    </div>
+
+    <button
+      class="primary"
+      onclick="importCSV()"
+    >
+      読み込む
+    </button>
+
+    <button onclick="closeImport()">
+      閉じる
+    </button>
+
+  </div>
+
+</div>
+
+
+<div class="modal" id="cardModal">
+
+  <div
+    class="dialog"
+    style="max-width:520px;text-align:center"
+  >
+
+    <button
+      onclick="closeCard()"
+      style="float:right"
+    >
+      ✕
+    </button>
+
+    <h2 id="cardTitle"></h2>
+
+    <img
+      id="cardImage2"
+      style="max-width:100%;max-height:70vh;object-fit:contain;border-radius:10px"
+    >
+
+    <p
+      id="cardMeta"
+      class="help"
+    ></p>
+
+    <p
+      id="noImage"
+      class="help"
+      style="display:none"
+    >
+      画像URLが登録されていません。
+      カードマスターCSVの画像URLを指定してください。
+    </p>
 
   </div>
 
@@ -598,1016 +626,885 @@ select {
 
 <script>
 
-const DATA_URL =
-  "data/cards.json?timestamp=" + Date.now();
+const KEY="loveca_inventory_v1";
+const MASTER_KEY="loveca_master_v1";
 
-const STORAGE_KEY =
-  "loveca_inventory_v4";
-
-
-let cards = [];
-
-let inventory = {};
-
-let currentWork = "";
-
-let currentKind = "";
-
-let currentOwnership = "all";
-
-let displayCount = 100;
+/* デッキ使用枚数専用の保存領域 */
+const USED_KEY="loveca_used_v1";
 
 
-/* =========================
-   データ読み込み
-   ========================= */
+/*
+  初期カード
+  既にカードマスターが保存されている場合、
+  こちらでは上書きしません。
+*/
 
-async function loadCards() {
+const seed=[
 
-  try {
+["PL!S-bp7-001-R","高海千歌","R","ブースターパック MELLOW MOMENT",4,"Aqours","Aqours"],
 
-    const response =
-      await fetch(DATA_URL);
+["PL!S-bp7-001-P","高海千歌","P","ブースターパック MELLOW MOMENT",4,"Aqours","Aqours"],
 
-    if (!response.ok) {
-      throw new Error(
-        "カードデータ取得失敗"
-      );
+["PL!S-bp7-002-R","桜内梨子","R","ブースターパック MELLOW MOMENT",4,"Aqours","Aqours"],
+
+["PL!S-bp7-002-P","桜内梨子","P","ブースターパック MELLOW MOMENT",4,"Aqours","Aqours"],
+
+["PL!SP-bp7-001-R","澁谷かのん","R","ブースターパック MELLOW MOMENT",4,"Liella!","Liella!"],
+
+["PL!SP-bp7-001-P","澁谷かのん","P","ブースターパック MELLOW MOMENT",4,"Liella!","Liella!"],
+
+["PL!SP-bp7-002-R","唐 可可","R","ブースターパック MELLOW MOMENT",4,"Liella!","Liella!"],
+
+["PL!-bp3-001-R","高坂穂乃果","R","ブースターパック　夏、はじまる。",4],
+
+["PL!-bp3-001-P","高坂穂乃果","P","ブースターパック　夏、はじまる。",4],
+
+["PL!-bp3-002-R","絢瀬絵里","R","ブースターパック　夏、はじまる。",4],
+
+["PL!-bp3-012-N","南 ことり","N","ブースターパック　夏、はじまる。",4],
+
+["PL!-bp3-014-N","星空 凛","N","ブースターパック　夏、はじまる。",4],
+
+["PL!-bp3-006-N","津島善子","N","ブースターパック　夏、はじまる。",4],
+
+["PL!N-bp3-022-N","三船栞子","N","ブースターパック　夏、はじまる。",4],
+
+["PL!-bp3-005-N","宮下 愛","N","ブースターパック　夏、はじまる。",4],
+
+["PL!-bp3-004","園田海未","-","ブースターパック　夏、はじまる。",4],
+
+["PL!-bp3-020-SECL","Snow halation","SECL","ブースターパック Anniversary 2026",4],
+
+["PL!-bp3-012-RM","南 ことり","RM","ブースターパック Anniversary 2026",4],
+
+["PL!-bp3-001-R＋","高坂穂乃果","R＋","ブースターパック Anniversary 2026",4],
+
+["PL!SP-bp1-023-SRL","START!! True dreams","SRL","プレミアムブースター ラブライブ！スーパースター!! DUO",4],
+
+["PL!SP-bp1-024-SRL","Tiny Stars","SRL","プレミアムブースター ラブライブ！スーパースター!! DUO",4],
+
+["PL!SP-bp1-025-SECL","Starlight Prologue","SECL","プレミアムブースター ラブライブ！スーパースター!! DUO",4],
+
+["PL!SP-bp1-026-SECL","未来予報ハレルヤ！","SECL","プレミアムブースター ラブライブ！スーパースター!! DUO",4],
+
+["PL!SP-bp1-027-SRL","Sing！Shine！Smile！","SRL","プレミアムブースター ラブライブ！スーパースター!! DUO",4],
+
+["PL!SP-bp2-023-SRL","Go!! リスタート","SRL","プレミアムブースター ラブライブ！スーパースター!! DUO",4],
+
+["PL!SP-bp2-024-SRL","ビタミンSUMMER!","SRL","プレミアムブースター ラブライブ！スーパースター!! DUO",4],
+
+["PL!SP-bp2-025-SRL","Bubble Rise","SRL","プレミアムブースター ラブライブ！スーパースター!! DUO",4],
+
+["PL!SP-bp4-024-SECL","ノンフィクション!!","SECL","プレミアムブースター ラブライブ！スーパースター!! DUO",4],
+
+["LL-bp1-E01-RE","エネルギーカード","RE","ブースターパック Anniversary 2026",4]
+
+];
+
+
+let master=
+  JSON.parse(localStorage.getItem(MASTER_KEY)||"null");
+
+let inv=
+  JSON.parse(localStorage.getItem(KEY)||"{}");
+
+let used=
+  JSON.parse(localStorage.getItem(USED_KEY)||"{}");
+
+
+function inferSchool(id,name){
+
+  const x=String(id);
+
+  if(x.startsWith("PL!-")) return "μ's";
+  if(x.startsWith("PL!S-")) return "Aqours";
+  if(x.startsWith("PL!N-")) return "虹ヶ咲";
+  if(x.startsWith("PL!SP-")) return "Liella!";
+  if(x.startsWith("PL!HS-")) return "蓮ノ空";
+
+  return "その他";
+}
+
+
+function inferType(id,name){
+
+  const x=String(id);
+  const n=String(name);
+
+  if(/^LL-.*-E/.test(x)||/エネルギー/.test(n))
+    return "エネルギー";
+
+  if(
+    /^PL!.*-.*-\d+-(?:SECL|SRL|SEC|SR)/.test(x)
+    &&
+    /[！!？?]|[A-Za-z]/.test(n)
+  )
+    return "ライブ";
+
+  const liveNames=[
+    "Snow halation",
+    "MY舞☆TONIGHT",
+    "START!! True dreams",
+    "Tiny Stars",
+    "Starlight Prologue",
+    "未来予報ハレルヤ！",
+    "Sing！Shine！Smile！",
+    "Go!! リスタート",
+    "ビタミンSUMMER!",
+    "Bubble Rise",
+    "No brand girls"
+  ];
+
+  if(liveNames.includes(n))
+    return "ライブ";
+
+  return "メンバー";
+}
+
+
+function inferUnit(school,name){
+
+  const n=String(name);
+
+  const maps={
+
+    "μ's":{
+      "高坂穂乃果":"Printemps",
+      "南 ことり":"Printemps",
+      "園田海未":"lily white",
+      "絢瀬絵里":"BiBi",
+      "西木野真姫":"BiBi",
+      "矢澤にこ":"BiBi",
+      "星空 凛":"lily white",
+      "小泉花陽":"Printemps",
+      "東條 希":"lily white"
+    },
+
+    "Aqours":{
+      "高海千歌":"CYaRon！",
+      "渡辺 曜":"CYaRon！",
+      "黒澤ルビィ":"CYaRon！",
+      "松浦果南":"AZALEA",
+      "黒澤ダイヤ":"AZALEA",
+      "国木田花丸":"AZALEA",
+      "桜内梨子":"Guilty Kiss",
+      "津島善子":"Guilty Kiss",
+      "小原鞠莉":"Guilty Kiss"
+    },
+
+    "虹ヶ咲":{
+      "上原歩夢":"A・ZU・NA",
+      "優木せつ菜":"A・ZU・NA",
+      "桜坂しずく":"A・ZU・NA",
+      "宮下 愛":"DiverDiva",
+      "朝香果林":"DiverDiva",
+      "近江彼方":"QU4RTZ",
+      "中須かすみ":"QU4RTZ",
+      "エマ・ヴェルデ":"QU4RTZ",
+      "天王寺璃奈":"QU4RTZ",
+      "鐘 嵐珠":"R3BIRTH",
+      "三船栞子":"R3BIRTH",
+      "ミア・テイラー":"R3BIRTH"
+    },
+
+    "Liella!":{
+      "澁谷かのん":"CatChu!",
+      "唐 可可":"CatChu!",
+      "嵐 千砂都":"CatChu!",
+      "平安名すみれ":"KALEIDOSCORE",
+      "葉月 恋":"KALEIDOSCORE",
+      "桜小路きな子":"5yncri5e!",
+      "米女メイ":"5yncri5e!",
+      "若菜四季":"5yncri5e!",
+      "鬼塚夏美":"5yncri5e!"
+    },
+
+    "蓮ノ空":{
+      "日野下花帆":"スリーズブーケ",
+      "乙宗 梢":"スリーズブーケ",
+      "村野さやか":"DOLLCHESTRA",
+      "夕霧綴理":"DOLLCHESTRA",
+      "大沢瑠璃乃":"みらくらぱーく！",
+      "藤島 慈":"みらくらぱーく！",
+      "百生吟子":"Edel Note",
+      "徒町小鈴":"Edel Note",
+      "安養寺姫芽":"Edel Note"
     }
 
-    cards =
-      await response.json();
+  };
 
-    loadInventory();
+  return(
+    (maps[school]&&maps[school][n])
+    ||
+    "ユニットなし"
+  );
+}
 
-    document.getElementById(
-      "syncInfo"
-    ).textContent =
-      "カードデータ同期済み：" +
-      cards.length.toLocaleString() +
-      "件";
 
-    setupFilters();
+if(!master){
 
-    render();
+  master=seed.map(x=>({
+    id:x[0],
+    name:x[1],
+    rarity:x[2],
+    set:x[3],
+    need:+x[4]||4,
+    school:x[5]||inferSchool(x[0],x[1]),
+    unit:x[6]||inferUnit(
+      x[5]||inferSchool(x[0],x[1]),
+      x[1]
+    ),
+    type:x[7]||inferType(x[0],x[1])
+  }));
 
-  } catch (error) {
+  saveMaster();
 
-    console.error(error);
+}else{
 
-    document.getElementById(
-      "syncInfo"
-    ).textContent =
-      "カードデータを読み込めませんでした";
+  master.forEach(c=>{
 
-  }
+    c.school=
+      c.school||
+      inferSchool(c.id,c.name);
+
+    c.unit=
+      c.unit||
+      inferUnit(c.school,c.name);
+
+    c.type=
+      c.type||
+      inferType(c.id,c.name);
+
+  });
+
+  saveMaster();
 
 }
 
 
-/* =========================
-   所持データ
-   ========================= */
-
-function loadInventory() {
-
-  try {
-
-    inventory =
-      JSON.parse(
-        localStorage.getItem(
-          STORAGE_KEY
-        ) || "{}"
-      );
-
-  } catch {
-
-    inventory = {};
-
-  }
-
-}
-
-
-function saveInventory() {
+function save(){
 
   localStorage.setItem(
-    STORAGE_KEY,
-    JSON.stringify(inventory)
+    KEY,
+    JSON.stringify(inv)
+  );
+
+  localStorage.setItem(
+    USED_KEY,
+    JSON.stringify(used)
   );
 
 }
 
 
-/* =========================
-   フィルター
-   ========================= */
+function saveMaster(){
 
-function setupFilters() {
-
-  const products =
-    [...new Set(
-      cards
-        .map(c => c.product)
-        .filter(Boolean)
-    )]
-    .sort(
-      (a, b) =>
-        a.localeCompare(
-          b,
-          "ja"
-        )
-    );
-
-  const productSelect =
-    document.getElementById(
-      "productFilter"
-    );
-
-  for (
-    const product of products
-  ) {
-
-    const option =
-      document.createElement(
-        "option"
-      );
-
-    option.value =
-      product;
-
-    option.textContent =
-      product;
-
-    productSelect.appendChild(
-      option
-    );
-
-  }
-
-
-  const rarities =
-    [...new Set(
-      cards
-        .map(c => c.rarity)
-        .filter(Boolean)
-    )]
-    .sort();
-
-  const raritySelect =
-    document.getElementById(
-      "rarityFilter"
-    );
-
-  for (
-    const rarity of rarities
-  ) {
-
-    const option =
-      document.createElement(
-        "option"
-      );
-
-    option.value =
-      rarity;
-
-    option.textContent =
-      rarity;
-
-    raritySelect.appendChild(
-      option
-    );
-
-  }
-
-
-  document
-    .getElementById("search")
-    .addEventListener(
-      "input",
-      () => {
-        displayCount = 100;
-        render();
-      }
-    );
-
-
-  productSelect.addEventListener(
-    "change",
-    () => {
-      displayCount = 100;
-      render();
-    }
+  localStorage.setItem(
+    MASTER_KEY,
+    JSON.stringify(master)
   );
-
-
-  raritySelect.addEventListener(
-    "change",
-    () => {
-      displayCount = 100;
-      render();
-    }
-  );
-
-
-  document
-    .querySelectorAll(
-      "[data-work]"
-    )
-    .forEach(button => {
-
-      button.addEventListener(
-        "click",
-        () => {
-
-          currentWork =
-            button.dataset.work;
-
-          document
-            .querySelectorAll(
-              "[data-work]"
-            )
-            .forEach(
-              b =>
-                b.classList.remove(
-                  "active"
-                )
-            );
-
-          button.classList.add(
-            "active"
-          );
-
-          displayCount = 100;
-
-          render();
-
-        }
-      );
-
-    });
-
-
-  document
-    .querySelectorAll(
-      "[data-kind]"
-    )
-    .forEach(button => {
-
-      button.addEventListener(
-        "click",
-        () => {
-
-          currentKind =
-            button.dataset.kind;
-
-          document
-            .querySelectorAll(
-              "[data-kind]"
-            )
-            .forEach(
-              b =>
-                b.classList.remove(
-                  "active"
-                )
-            );
-
-          button.classList.add(
-            "active"
-          );
-
-          displayCount = 100;
-
-          render();
-
-        }
-      );
-
-    });
-
-
-  document
-    .querySelectorAll(
-      "[data-ownership]"
-    )
-    .forEach(button => {
-
-      button.addEventListener(
-        "click",
-        () => {
-
-          currentOwnership =
-            button.dataset.ownership;
-
-          document
-            .querySelectorAll(
-              "[data-ownership]"
-            )
-            .forEach(
-              b =>
-                b.classList.remove(
-                  "active"
-                )
-            );
-
-          button.classList.add(
-            "active"
-          );
-
-          displayCount = 100;
-
-          render();
-
-        }
-      );
-
-    });
-
-
-  document
-    .getElementById("moreButton")
-    .addEventListener(
-      "click",
-      () => {
-
-        displayCount += 100;
-
-        render();
-
-      }
-    );
 
 }
 
 
-/* =========================
-   カード絞り込み
-   ========================= */
+function render(){
 
-function getFilteredCards() {
-
-  const search =
+  const q=
     document
       .getElementById("search")
       .value
       .trim()
       .toLowerCase();
 
-  const product =
-    document
-      .getElementById(
-        "productFilter"
-      )
-      .value;
+  const sf=
+    document.getElementById("setFilter").value;
 
-  const rarity =
-    document
-      .getElementById(
-        "rarityFilter"
-      )
-      .value;
+  const rf=
+    document.getElementById("rarityFilter").value;
 
+  const st=
+    document.getElementById("statusFilter").value;
 
-  return cards.filter(card => {
+  const school=
+    document.getElementById("schoolFilter").value;
 
-    if (
-      currentWork &&
-      card.work !== currentWork
-    ) {
-      return false;
-    }
+  const unit=
+    document.getElementById("unitFilter").value;
+
+  const sort=
+    document.getElementById("sortFilter").value;
+
+  const type=
+    document.getElementById("typeFilter").value;
 
 
-    if (
-      currentKind &&
-      card.kind !== currentKind
-    ) {
-      return false;
-    }
+  const sets=[
+    ...new Set(
+      master.map(x=>x.set)
+    )
+  ].sort();
+
+  const rs=[
+    ...new Set(
+      master.map(x=>x.rarity)
+    )
+  ].sort();
+
+  const schools=[
+    ...new Set(
+      master.map(x=>x.school||"その他")
+    )
+  ].sort();
+
+  const units=[
+    ...new Set(
+      master.map(x=>x.unit||"ユニットなし")
+    )
+  ].sort();
 
 
-    if (
-      product &&
-      card.product !== product
-    ) {
-      return false;
-    }
+  const s=
+    document.getElementById("setFilter");
+
+  const r=
+    document.getElementById("rarityFilter");
+
+  const sv=s.value;
+  const rv=r.value;
+
+  const oldSchool=school;
+  const oldUnit=unit;
 
 
-    if (
-      rarity &&
-      card.rarity !== rarity
-    ) {
-      return false;
-    }
+  const sh=
+    document.getElementById("schoolFilter");
+
+  const un=
+    document.getElementById("unitFilter");
 
 
-    const count =
-      Number(
-        inventory[card.id] || 0
+  sh.innerHTML=
+    '<option value="">作品・学校：すべて</option>'+
+    schools
+      .map(x=>`<option>${esc(x)}</option>`)
+      .join("");
+
+  sh.value=oldSchool;
+
+
+  un.innerHTML=
+    '<option value="">ユニット：すべて</option>'+
+    units
+      .map(x=>`<option>${esc(x)}</option>`)
+      .join("");
+
+  un.value=oldUnit;
+
+
+  s.innerHTML=
+    '<option value="">収録商品：すべて</option>'+
+    sets
+      .map(x=>`<option>${esc(x)}</option>`)
+      .join("");
+
+  s.value=sv;
+
+
+  r.innerHTML=
+    '<option value="">レアリティ：すべて</option>'+
+    rs
+      .map(x=>`<option>${esc(x)}</option>`)
+      .join("");
+
+  r.value=rv;
+
+
+  let owned=0;
+  let usedTotal=0;
+  let missing=0;
+  let complete=0;
+
+
+  const rows=
+    master.filter(c=>{
+
+      const n=
+        inv[c.id]||0;
+
+      const text=
+        (
+          c.id+
+          " "+
+          c.name+
+          " "+
+          c.set
+        ).toLowerCase();
+
+
+      return
+
+        (!q||text.includes(q))
+
+        &&
+
+        (!type||
+          (c.type||"メンバー")===type
+        )
+
+        &&
+
+        (!school||
+          c.school===school
+        )
+
+        &&
+
+        (!unit||
+          c.unit===unit
+        )
+
+        &&
+
+        (!sf||
+          c.set===sf
+        )
+
+        &&
+
+        (!rf||
+          c.rarity===rf
+        )
+
+        &&
+
+        (!st||
+
+          (
+            st==="missing" &&
+            n<c.need
+          )
+
+          ||
+
+          (
+            st==="zero" &&
+            n===0
+          )
+
+          ||
+
+          (
+            st==="complete" &&
+            n>=c.need
+          )
+
+        );
+
+    });
+
+
+  rows.sort((a,b)=>{
+
+    const A=
+      (sort==="name"||sort==="nameDesc")
+      ?a.name
+      :sort==="school"
+      ?a.school
+      :sort==="unit"
+      ?a.unit
+      :a.id;
+
+
+    const B=
+      (sort==="name"||sort==="nameDesc")
+      ?b.name
+      :sort==="school"
+      ?b.school
+      :sort==="unit"
+      ?b.unit
+      :b.id;
+
+
+    const cmp=
+      String(A).localeCompare(
+        String(B),
+        "ja"
       );
 
 
-    if (
-      currentOwnership ===
-      "owned" &&
-      count <= 0
-    ) {
-      return false;
-    }
-
-
-    if (
-      currentOwnership ===
-      "missing" &&
-      count > 0
-    ) {
-      return false;
-    }
-
-
-    if (search) {
-
-      const target = [
-
-        card.id,
-
-        card.name,
-
-        card.product,
-
-        card.work,
-
-        card.unit,
-
-        card.school,
-
-        card.rarity
-
-      ]
-        .filter(Boolean)
-        .join(" ")
-        .toLowerCase();
-
-
-      if (
-        !target.includes(search)
-      ) {
-        return false;
-      }
-
-    }
-
-
-    return true;
+    return sort==="nameDesc"
+      ?-cmp
+      :cmp;
 
   });
 
+
+  master.forEach(c=>{
+
+    const n=
+      inv[c.id]||0;
+
+    const u=
+      Math.min(
+        used[c.id]||0,
+        n
+      );
+
+
+    owned+=n;
+    usedTotal+=u;
+
+    missing+=
+      Math.max(
+        0,
+        c.need-n
+      );
+
+
+    if(n>=c.need)
+      complete++;
+
+  });
+
+
+  document
+    .getElementById("cardCount")
+    .textContent=master.length;
+
+  document
+    .getElementById("ownedCount")
+    .textContent=owned;
+
+  document
+    .getElementById("usedCount")
+    .textContent=usedTotal;
+
+  document
+    .getElementById("missingCount")
+    .textContent=missing;
+
+  document
+    .getElementById("completeCount")
+    .textContent=complete;
+
+
+  document.getElementById("rows").innerHTML=
+
+    rows.length
+
+    ?
+
+    rows.map(c=>{
+
+      const n=
+        inv[c.id]||0;
+
+      const u=
+        Math.min(
+          used[c.id]||0,
+          n
+        );
+
+      const d=
+        c.need-n;
+
+      const available=
+        Math.max(
+          0,
+          n-u
+        );
+
+
+      const cls=
+        d<=0
+        ?"ok"
+        :n===0
+        ?"bad"
+        :"warn";
+
+
+      const status=
+        d<=0
+        ?"達成"
+        :`あと ${d}枚`;
+
+
+      return `
+
+<tr>
+
+<td>
+<code>${esc(c.id)}</code>
+</td>
+
+<td>
+
+<span
+  class="card-link"
+  onclick="showImage(
+    '${js(c.id)}',
+    '${js(c.name)}',
+    '${js(c.image||"")}'
+  )"
+>
+
+<b>${esc(c.name)}</b>
+
+</span>
+
+</td>
+
+<td>
+<span class="badge">
+${esc(c.type||"メンバー")}
+</span>
+</td>
+
+<td>
+<span class="badge">
+${esc(c.rarity)}
+</span>
+</td>
+
+<td>
+${esc(c.set)}
+</td>
+
+<td>
+
+<div class="qty">
+
+<button
+  onclick="change(
+    '${js(c.id)}',
+    -1
+  )"
+>
+−
+</button>
+
+<strong>
+${n}
+</strong>
+
+<button
+  onclick="change(
+    '${js(c.id)}',
+    1
+  )"
+>
+＋
+</button>
+
+</div>
+
+</td>
+
+<td>
+
+<div class="qty">
+
+<button
+  onclick="changeUsed(
+    '${js(c.id)}',
+    -1
+  )"
+>
+−
+</button>
+
+<strong class="used">
+${u}
+</strong>
+
+<button
+  onclick="changeUsed(
+    '${js(c.id)}',
+    1
+  )"
+>
+＋
+</button>
+
+</div>
+
+<div class="available">
+使用可能 ${available}枚
+</div>
+
+</td>
+
+<td class="need">
+${c.need}
+</td>
+
+<td class="${cls}">
+${status}
+</td>
+
+</tr>
+
+`;
+
+    }).join("")
+
+    :
+
+    `
+<tr>
+<td colspan="9" class="empty">
+該当するカードがありません
+</td>
+</tr>
+`;
+
 }
 
 
-/* =========================
-   カード表示
-   ========================= */
+function change(id,d){
 
-function render() {
+  const current=
+    inv[id]||0;
 
-  const filtered =
-    getFilteredCards();
-
-
-  const display =
-    filtered.slice(
+  const next=
+    Math.max(
       0,
-      displayCount
+      current+d
     );
 
 
-  const container =
-    document.getElementById(
-      "cards"
-    );
-
-  container.innerHTML = "";
+  inv[id]=next;
 
 
-  for (
-    const card of display
-  ) {
+  /*
+    所持枚数を減らして
+    使用枚数が所持枚数を超えた場合、
+    使用枚数も自動調整
+  */
 
-    const element =
-      document.createElement(
-        "div"
-      );
+  if(
+    (used[id]||0)>next
+  ){
 
-    element.className =
-      "card";
-
-
-    const count =
-      Number(
-        inventory[card.id] || 0
-      );
-
-
-    let imageHTML;
-
-
-    if (card.image) {
-
-      imageHTML = `
-        <img
-          class="card-image"
-          src="${escapeHTML(card.image)}"
-          alt="${escapeHTML(card.name || "")}"
-          loading="lazy"
-          data-image="${escapeHTML(card.image)}"
-        >
-      `;
-
-    } else {
-
-      imageHTML = `
-        <div class="no-image">
-          画像なし
-        </div>
-      `;
-
-    }
-
-
-    let kindText =
-      "";
-
-    if (
-      card.kind ===
-      "member"
-    ) {
-
-      kindText =
-        "メンバー";
-
-    } else if (
-      card.kind ===
-      "live"
-    ) {
-
-      kindText =
-        "ライブ";
-
-    } else {
-
-      kindText =
-        card.kind || "";
-
-    }
-
-
-    element.innerHTML = `
-
-      <div class="card-image-wrap">
-        ${imageHTML}
-      </div>
-
-      <div class="card-info">
-
-        <div class="card-name">
-          ${escapeHTML(
-            card.name || "名称不明"
-          )}
-        </div>
-
-        <div class="card-meta">
-
-          ${
-            card.work
-              ? `<span class="badge">
-                   ${escapeHTML(card.work)}
-                 </span>`
-              : ""
-          }
-
-          ${
-            kindText
-              ? `<span class="badge">
-                   ${escapeHTML(kindText)}
-                 </span>`
-              : ""
-          }
-
-          ${
-            card.rarity
-              ? `<span class="badge">
-                   ${escapeHTML(card.rarity)}
-                 </span>`
-              : ""
-          }
-
-          <br>
-
-          ${escapeHTML(
-            card.id || ""
-          )}
-
-          <br>
-
-          ${
-            card.product
-              ? escapeHTML(
-                  card.product
-                )
-              : "商品情報なし"
-          }
-
-        </div>
-
-      </div>
-
-      <div class="inventory">
-
-        <button
-          type="button"
-          class="minus-button"
-          data-id="${escapeHTML(card.id)}"
-        >
-          −
-        </button>
-
-        <div class="inventory-count">
-          ${count}
-        </div>
-
-        <button
-          type="button"
-          class="plus-button"
-          data-id="${escapeHTML(card.id)}"
-        >
-          ＋
-        </button>
-
-      </div>
-
-    `;
-
-
-    container.appendChild(
-      element
-    );
+    used[id]=next;
 
   }
 
 
-  container
-    .querySelectorAll(
-      ".minus-button"
-    )
-    .forEach(button => {
+  save();
+  render();
 
-      button.addEventListener(
-        "click",
-        () => {
-
-          const id =
-            button.dataset.id;
-
-          const current =
-            Number(
-              inventory[id] || 0
-            );
-
-          if (
-            current > 0
-          ) {
-
-            inventory[id] =
-              current - 1;
-
-          }
-
-          saveInventory();
-
-          render();
-
-        }
-      );
-
-    });
+}
 
 
-  container
-    .querySelectorAll(
-      ".plus-button"
-    )
-    .forEach(button => {
+function changeUsed(id,d){
 
-      button.addEventListener(
-        "click",
-        () => {
+  const owned=
+    inv[id]||0;
 
-          const id =
-            button.dataset.id;
-
-          const current =
-            Number(
-              inventory[id] || 0
-            );
-
-          inventory[id] =
-            current + 1;
-
-          saveInventory();
-
-          render();
-
-        }
-      );
-
-    });
+  const current=
+    used[id]||0;
 
 
-  updateStats();
+  /*
+    使用枚数は
+    0～所持枚数の範囲
+  */
 
-
-  document.getElementById(
-    "resultInfo"
-  ).textContent =
-    filtered.length.toLocaleString() +
-    "件中 " +
-    Math.min(
-      displayCount,
-      filtered.length
-    ).toLocaleString() +
-    "件を表示";
-
-
-  const moreButton =
-    document.getElementById(
-      "moreButton"
+  const next=
+    Math.max(
+      0,
+      Math.min(
+        owned,
+        current+d
+      )
     );
 
 
-  if (
-    displayCount <
-    filtered.length
-  ) {
+  used[id]=next;
 
-    moreButton.style.display =
-      "block";
+  save();
+  render();
 
-    moreButton.textContent =
-      "もっと読み込む";
+}
 
-  } else {
 
-    moreButton.style.display =
-      "none";
+function resetUsed(){
+
+  if(
+    confirm(
+      "デッキ使用枚数をすべて0にします。所持枚数は残ります。"
+    )
+  ){
+
+    used={};
+
+    save();
+    render();
 
   }
 
 }
 
 
-/* =========================
-   統計
-   ========================= */
+function esc(s){
 
-function updateStats() {
-
-  const total =
-    cards.length;
-
-
-  let ownedCards =
-    0;
-
-  let ownedQuantity =
-    0;
-
-
-  for (
-    const card of cards
-  ) {
-
-    const count =
-      Number(
-        inventory[card.id] || 0
-      );
-
-
-    if (
-      count > 0
-    ) {
-
-      ownedCards++;
-
-      ownedQuantity +=
-        count;
-
-    }
-
-  }
-
-
-  const rate =
-    total > 0
-      ? (
-          ownedCards /
-          total *
-          100
-        ).toFixed(1)
-      : "0.0";
-
-
-  document.getElementById(
-    "totalCards"
-  ).textContent =
-    total.toLocaleString();
-
-
-  document.getElementById(
-    "ownedCards"
-  ).textContent =
-    ownedCards.toLocaleString();
-
-
-  document.getElementById(
-    "ownedQuantity"
-  ).textContent =
-    ownedQuantity.toLocaleString();
-
-
-  document.getElementById(
-    "collectionRate"
-  ).textContent =
-    rate + "%";
+  return String(s).replace(
+    /[&<>"']/g,
+    m=>({
+      "&":"&amp;",
+      "<":"&lt;",
+      ">":"&gt;",
+      '"':"&quot;",
+      "'":"&#39;"
+    }[m])
+  );
 
 }
 
 
-/* =========================
-   HTMLエスケープ
-   ========================= */
+function js(s){
 
-function escapeHTML(value) {
-
-  return String(value)
-    .replace(
-      /&/g,
-      "&amp;"
-    )
-    .replace(
-      /</g,
-      "&lt;"
-    )
-    .replace(
-      />/g,
-      "&gt;"
-    )
-    .replace(
-      /"/g,
-      "&quot;"
-    )
-    .replace(
-      /'/g,
-      "&#039;"
-    );
+  return String(s)
+    .replace(/\\/g,"\\\\")
+    .replace(/'/g,"\\'");
 
 }
 
 
-/* =========================
-   画像拡大
-   ========================= */
+function showImage(
+  id,
+  name,
+  url
+){
 
-const imageModal =
-  document.getElementById(
-    "imageModal"
-  );
-
-const imageModalImage =
-  document.getElementById(
-    "imageModalImage"
-  );
-
-const imageModalClose =
-  document.getElementById(
-    "imageModalClose"
-  );
-
-const imageModalBackdrop =
-  document.getElementById(
-    "imageModalBackdrop"
-  );
+  document
+    .getElementById("imageTitle")
+    .textContent=
+      name+
+      "（"+
+      id+
+      "）";
 
 
-function openImageModal(
-  src,
-  alt
-) {
-
-  imageModalImage.src =
-    src;
-
-  imageModalImage.alt =
-    alt || "";
-
-  imageModal.classList.add(
-    "active"
-  );
-
-  document.body.style.overflow =
-    "hidden";
-
-}
+  const img=
+    document.getElementById("cardImage");
 
 
-function closeImageModal() {
+  img.onerror=()=>{
 
-  imageModal.classList.remove(
-    "active"
-  );
+    img.removeAttribute("src");
 
-  imageModalImage.src =
-    "";
+    img.alt=
+      "画像が登録されていません";
 
-  document.body.style.overflow =
-    "";
-
-}
+  };
 
 
-/*
- * カード画像をタップ
- */
-document.addEventListener(
-  "click",
-  event => {
+  if(url){
 
-    const image =
-      event.target.closest(
-        ".card-image"
-      );
+    img.src=url;
 
-    if (!image) {
-      return;
-    }
+  }else{
 
-
-    openImageModal(
-      image.dataset.image ||
-      image.src,
-      image.alt
-    );
-
-  }
-);
-
-
-/*
- * ×ボタン
- */
-imageModalClose.addEventListener(
-  "click",
-  closeImageModal
-);
-
-
-/*
- * 背景をタップ
- */
-imageModalBackdrop.addEventListener(
-  "click",
-  closeImageModal
-);
-
-
-/*
- * Escキー
- */
-document.addEventListener(
-  "keydown",
-  event => {
-
-    if (
-      event.key ===
-      "Escape"
-    ) {
-
-      closeImageModal();
-
-    }
-
-  }
-);
-
-
-/* =========================
-   開始
-   ========================= */
-
-loadCards();
-
-</script>
-
-</body>
-</html>
+   
