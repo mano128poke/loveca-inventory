@@ -315,6 +315,15 @@
     "work": "μ's"
   },
   {
+    "id": "PL!-PR-024",
+    "name": "絢瀬絵里",
+    "kind": "member",
+    "work": "μ's",
+    "product": "",
+    "image": "https://raw.githubusercontent.com/wlt233/llocg_db/master/img/cards/PR/PL!-PR-024-PR.png",
+    "rarity": "PR"
+  },
+  {
     "id": "PL!-PR-025",
     "name": "南ことり",
     "kind": "member",
@@ -2115,6 +2124,15 @@
     "rarity": "N"
   },
   {
+    "id": "PL!-pb2-029",
+    "name": "絢瀬絵里",
+    "kind": "member",
+    "work": "μ's",
+    "product": "",
+    "image": "https://raw.githubusercontent.com/wlt233/llocg_db/master/img/cards/PBLL02/PL!-pb2-029-N.png",
+    "rarity": "N"
+  },
+  {
     "id": "PL!-pb2-030",
     "name": "南ことり",
     "kind": "member",
@@ -2157,6 +2175,15 @@
     "work": "μ's",
     "product": "",
     "image": "https://raw.githubusercontent.com/wlt233/llocg_db/master/img/cards/PBLL02/PL!-pb2-034-N.png",
+    "rarity": "N"
+  },
+  {
+    "id": "PL!-pb2-035",
+    "name": "小泉花陽",
+    "kind": "member",
+    "work": "μ's",
+    "product": "",
+    "image": "https://raw.githubusercontent.com/wlt233/llocg_db/master/img/cards/PBLL02/PL!-pb2-035-N.png",
     "rarity": "N"
   },
   {
