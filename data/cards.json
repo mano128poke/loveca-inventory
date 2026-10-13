@@ -10368,6 +10368,24 @@
     "work": "Liella!"
   },
   {
+    "id": "PL!SP-PR-027",
+    "name": "平安名すみれ",
+    "kind": "member",
+    "work": "Liella!",
+    "product": "",
+    "image": "https://raw.githubusercontent.com/wlt233/llocg_db/master/img/cards/PR/PL!SP-PR-027-PR.png",
+    "rarity": "PR"
+  },
+  {
+    "id": "PL!SP-PR-028",
+    "name": "米女メイ",
+    "kind": "member",
+    "work": "Liella!",
+    "product": "",
+    "image": "https://raw.githubusercontent.com/wlt233/llocg_db/master/img/cards/PR/PL!SP-PR-028-PR.png",
+    "rarity": "PR"
+  },
+  {
     "id": "PL!SP-bp1-001",
     "name": "澁谷かのん",
     "product": "",
