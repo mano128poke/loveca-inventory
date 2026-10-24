@@ -9606,6 +9606,123 @@
     "rarity": "L"
   },
   {
+    "id": "PL!S-cl1-001",
+    "name": "高海千歌",
+    "kind": "member",
+    "work": "Aqours",
+    "product": "",
+    "image": "https://raw.githubusercontent.com/wlt233/llocg_db/master/img/cards/CLLS01/PL!S-cl1-001-CL.png",
+    "rarity": "CL"
+  },
+  {
+    "id": "PL!S-cl1-002",
+    "name": "桜内梨子",
+    "kind": "member",
+    "work": "Aqours",
+    "product": "",
+    "image": "https://raw.githubusercontent.com/wlt233/llocg_db/master/img/cards/CLLS01/PL!S-cl1-002-CL.png",
+    "rarity": "CL"
+  },
+  {
+    "id": "PL!S-cl1-003",
+    "name": "松浦果南",
+    "kind": "member",
+    "work": "Aqours",
+    "product": "",
+    "image": "https://raw.githubusercontent.com/wlt233/llocg_db/master/img/cards/CLLS01/PL!S-cl1-003-CL.png",
+    "rarity": "CL"
+  },
+  {
+    "id": "PL!S-cl1-004",
+    "name": "黒澤ダイヤ",
+    "kind": "member",
+    "work": "Aqours",
+    "product": "",
+    "image": "https://raw.githubusercontent.com/wlt233/llocg_db/master/img/cards/CLLS01/PL!S-cl1-004-CL.png",
+    "rarity": "CL"
+  },
+  {
+    "id": "PL!S-cl1-005",
+    "name": "渡辺曜",
+    "kind": "member",
+    "work": "Aqours",
+    "product": "",
+    "image": "https://raw.githubusercontent.com/wlt233/llocg_db/master/img/cards/CLLS01/PL!S-cl1-005-CL.png",
+    "rarity": "CL"
+  },
+  {
+    "id": "PL!S-cl1-006",
+    "name": "津島善子",
+    "kind": "member",
+    "work": "Aqours",
+    "product": "",
+    "image": "https://raw.githubusercontent.com/wlt233/llocg_db/master/img/cards/CLLS01/PL!S-cl1-006-CL.png",
+    "rarity": "CL"
+  },
+  {
+    "id": "PL!S-cl1-007",
+    "name": "国木田花丸",
+    "kind": "member",
+    "work": "Aqours",
+    "product": "",
+    "image": "https://raw.githubusercontent.com/wlt233/llocg_db/master/img/cards/CLLS01/PL!S-cl1-007-CL.png",
+    "rarity": "CL"
+  },
+  {
+    "id": "PL!S-cl1-008",
+    "name": "小原鞠莉",
+    "kind": "member",
+    "work": "Aqours",
+    "product": "",
+    "image": "https://raw.githubusercontent.com/wlt233/llocg_db/master/img/cards/CLLS01/PL!S-cl1-008-CL.png",
+    "rarity": "CL"
+  },
+  {
+    "id": "PL!S-cl1-009",
+    "name": "黒澤ルビィ",
+    "kind": "member",
+    "work": "Aqours",
+    "product": "",
+    "image": "https://raw.githubusercontent.com/wlt233/llocg_db/master/img/cards/CLLS01/PL!S-cl1-009-CL.png",
+    "rarity": "CL"
+  },
+  {
+    "id": "PL!S-cl1-010",
+    "name": "未体験HORIZON",
+    "kind": "live",
+    "work": "Aqours",
+    "product": "",
+    "image": "https://raw.githubusercontent.com/wlt233/llocg_db/master/img/cards/CLLS01/PL!S-cl1-010-CL.png",
+    "rarity": "CL"
+  },
+  {
+    "id": "PL!S-cl1-011",
+    "name": "想いよひとつになれ",
+    "kind": "live",
+    "work": "Aqours",
+    "product": "",
+    "image": "https://raw.githubusercontent.com/wlt233/llocg_db/master/img/cards/CLLS01/PL!S-cl1-011-CL.png",
+    "rarity": "CL"
+  },
+  {
+    "id": "PL!S-cl1-012",
+    "name": "キセキヒカル",
+    "kind": "live",
+    "work": "Aqours",
+    "product": "",
+    "image": "https://raw.githubusercontent.com/wlt233/llocg_db/master/img/cards/CLLS01/PL!S-cl1-012-CL.png",
+    "rarity": "CL"
+  },
+  {
+    "id": "PL!S-cl1-013",
+    "name": "WATER BLUE NEW WORLD",
+    "kind": "live",
+    "work": "Aqours",
+    "product": "",
+    "image": "https://raw.githubusercontent.com/wlt233/llocg_db/master/img/cards/CLLS01/PL!S-cl1-013-CL.png",
+    "rarity": "CL"
+  },
+  {
     "id": "PL!S-pb1-001",
     "name": "高海千歌",
     "product": "",
