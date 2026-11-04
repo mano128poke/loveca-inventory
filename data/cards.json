@@ -2850,6 +2850,31 @@
     "work": "蓮ノ空"
   },
   {
+    "id": "PL!HS-PR-039",
+    "name": "百生吟子",
+    "kind": "member",
+    "work": "蓮ノ空",
+    "product": "PRカード",
+    "image": "https://raw.githubusercontent.com/wlt233/llocg_db/master/img/cards/PR/PL!HS-PR-039-PR.png",
+    "rarity": "PR"
+  },
+  {
+    "id": "PL!HS-PR-040",
+    "name": "安養寺姫芽",
+    "kind": "member",
+    "work": "蓮ノ空",
+    "product": "PRカード",
+    "image": "https://raw.githubusercontent.com/wlt233/llocg_db/master/img/cards/PR/PL!HS-PR-040-PR.png",
+    "rarity": "PR"
+  },
+  {
+    "id": "PL!HS-PR-043",
+    "name": "桂城泉",
+    "kind": "member",
+    "work": "蓮ノ空",
+    "product": ""
+  },
+  {
     "id": "PL!HS-bp1-001",
     "name": "日野下花帆",
     "product": "ブースターパック vol.1",
@@ -4997,6 +5022,20 @@
   {
     "id": "PL!N-PR-037",
     "name": "近江彼方",
+    "kind": "member",
+    "work": "虹ヶ咲",
+    "product": ""
+  },
+  {
+    "id": "PL!N-PR-038",
+    "name": "天王寺璃奈",
+    "kind": "member",
+    "work": "虹ヶ咲",
+    "product": ""
+  },
+  {
+    "id": "PL!N-PR-039",
+    "name": "ミア・テイラー",
     "kind": "member",
     "work": "虹ヶ咲",
     "product": ""
@@ -10508,6 +10547,27 @@
     "product": "PRカード",
     "image": "https://raw.githubusercontent.com/wlt233/llocg_db/master/img/cards/PR/PL!SP-PR-028-PR.png",
     "rarity": "PR"
+  },
+  {
+    "id": "PL!SP-PR-033",
+    "name": "嵐千砂都",
+    "kind": "member",
+    "work": "Liella!",
+    "product": ""
+  },
+  {
+    "id": "PL!SP-PR-034",
+    "name": "葉月恋",
+    "kind": "member",
+    "work": "Liella!",
+    "product": ""
+  },
+  {
+    "id": "PL!SP-PR-035",
+    "name": "鬼塚冬毬",
+    "kind": "member",
+    "work": "Liella!",
+    "product": ""
   },
   {
     "id": "PL!SP-bp1-001",
