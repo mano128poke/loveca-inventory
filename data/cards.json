@@ -345,11 +345,11 @@
     "id": "PL!-bp3-001",
     "name": "高坂穂乃果",
     "product": "",
-    "rarity": "P",
+    "rarity": "PR",
     "school": "",
     "unit": "",
     "kind": "member",
-    "image": "https://llofficial-cardgame.com/wordpress/wp-content/images/cardlist/BP03/PL!-bp3-P-001-P.png",
+    "image": "https://raw.githubusercontent.com/wlt233/llocg_db/master/img/cards/PR/PL!-bp3-001-PR.png",
     "required": 1,
     "work": "μ's"
   },
